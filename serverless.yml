@@ -1,0 +1,118 @@
+service: omni-dw-salesforce-datasync
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  versionFunctions: false
+  tags: ${self:custom.tags}
+  stackTags: ${self:custom.tags}
+  memorySize: 128
+  timeout: 30
+  role: ${ssm:/omni-dw/${self:provider.stage}/lambda/role}
+  environment:
+    REGION: ${self:custom.region}
+    STAGE: ${self:custom.stage}
+
+custom:
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  tags:
+    Application: OmniSalesforceApis
+    CreateBy: BizCloudExperts
+    Environment: ${self:custom.stage}
+
+plugins:
+  - serverless-offline
+  - serverless-step-functions
+
+package:
+  individually: true
+
+layers:
+  OmniSalesforceDatasyncLayer:
+    path: lambdaLayer/lib
+    name: ${self:service}-datasync-layer-${self:provider.stage}
+    description: Omni salesforce lambda layer for all node modules - ${self:provider.stage}
+    compatibleRuntimes:
+      - nodejs14.x
+    retain: false
+
+functions:
+  fetchLatestRecordsToS3: ${file(config/functions/fetchLatestRecordsToS3.yaml):function}
+  processS3Object: ${file(config/functions/processS3Object.yaml):function}
+  processCsvRecord: ${file(config/functions/processCsvRecord.yaml):function}
+  # processFailedRecords: ${file(config/functions/processFailedRecords.yaml):function}
+  archiveFile: ${file(config/functions/archiveFile.yaml):function}
+
+stepFunctions:
+  stateMachines:
+    salesforce-datasync: ${file(config/stepFunctions/salesforceDatasyncStateMachine.yaml):stateMachine}
+
+resources:
+  Resources:
+    datasyncTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        TableName: salesforce-datasync-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    stateMachineRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: salesforce-datasync-stepfuction-role-${self:provider.stage}
+        AssumeRolePolicyDocument:
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+        Policies:
+          - PolicyName: statePolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - s3:*
+                    - s3-object-lambda:*
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - states:RedriveExecution
+                    - states:StartExecution
+                    - states:DescribeExecution
+                    - states:StopExecution
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - events:PutTargets
+                    - events:PutRule
+                    - events:DescribeRule
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - xray:PutTraceSegments
+                    - xray:PutTelemetryRecords
+                    - xray:GetSamplingRules
+                    - xray:GetSamplingTargets
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"

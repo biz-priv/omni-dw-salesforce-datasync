@@ -1,0 +1,131 @@
+stateMachine:
+  name: salesforce-datasync-state-machine-${self:provider.stage}
+  role: !GetAtt stateMachineRole.Arn
+  definition:
+    Comment: "State machine for salesforce data sync"
+    StartAt: fetchLatestRecordsToS3
+    States:
+      fetchLatestRecordsToS3:
+        Type: Task
+        Resource: !GetAtt fetchLatestRecordsToS3.Arn
+        Parameters:
+          Payload.$: $
+        Retry:
+          - ErrorEquals:
+              - Lambda.ServiceException
+              - Lambda.AWSLambdaException
+              - Lambda.SdkClientException
+              - Lambda.TooManyRequestsException
+            IntervalSeconds: 1
+            MaxAttempts: 3
+            BackoffRate: 2
+        Next: s3ObjectsMap
+      s3ObjectsMap:
+        Type: Map
+        ToleratedFailurePercentage: 100
+        ItemProcessor:
+          ProcessorConfig:
+            Mode: DISTRIBUTED
+            ExecutionType: STANDARD
+          StartAt: processS3Object
+          States:
+            processS3Object:
+              Type: Task
+              Resource: !GetAtt processS3Object.Arn
+              Parameters:
+                Payload.$: $
+                Bucket: ${ssm:/omni-dw/salesforce/${self:provider.stage}/s3/bucket-name~true}
+              Retry:
+                - ErrorEquals:
+                    - Lambda.ServiceException
+                    - Lambda.AWSLambdaException
+                    - Lambda.SdkClientException
+                    - Lambda.TooManyRequestsException
+                  IntervalSeconds: 1
+                  MaxAttempts: 3
+                  BackoffRate: 2
+              ResultPath: $.processS3ObjectResult
+              Next: csvRecordsMap
+            csvRecordsMap:
+              Type: Map
+              ToleratedFailurePercentage: 100
+              ItemProcessor:
+                ProcessorConfig:
+                  Mode: DISTRIBUTED
+                  ExecutionType: EXPRESS
+                StartAt: processCsvRecord
+                States:
+                  processCsvRecord:
+                    Type: Task
+                    Resource: !GetAtt processCsvRecord.Arn
+                    Parameters:
+                      Payload.$: $.item
+                      Token.$: $.mapInput.processS3ObjectResult.Token
+                      Bucket.$: $.mapInput.processS3ObjectResult.Bucket
+                      Key.$: $.mapInput.Key
+                    Retry:
+                      - ErrorEquals:
+                          - Lambda.ServiceException
+                          - Lambda.AWSLambdaException
+                          - Lambda.SdkClientException
+                          - Lambda.TooManyRequestsException
+                        IntervalSeconds: 1
+                        MaxAttempts: 3
+                        BackoffRate: 2
+                    End: true
+                    ResultPath: $.processCsvRecordResult
+              ItemSelector:
+                item.$: $$.Map.Item.Value
+                mapInput.$: $
+              ItemReader:
+                Resource: arn:aws:states:::s3:getObject
+                ReaderConfig:
+                  InputType: CSV
+                  CSVHeaderLocation: FIRST_ROW
+                Parameters:
+                  Bucket.$: $.processS3ObjectResult.Bucket
+                  Key.$: $.Key
+              MaxConcurrency: 2
+              Label: FileAnalysis
+              ResultPath: null
+              Next: moveFileToArchive
+            moveFileToArchive:
+              Type: Task
+              Resource: !GetAtt archiveFile.Arn
+              Parameters:
+                Payload.$: $
+              Retry:
+                - ErrorEquals:
+                    - Lambda.ServiceException
+                    - Lambda.AWSLambdaException
+                    - Lambda.SdkClientException
+                    - Lambda.TooManyRequestsException
+                  IntervalSeconds: 1
+                  MaxAttempts: 3
+                  BackoffRate: 2
+              End: true
+        ItemReader:
+          Resource: arn:aws:states:::s3:listObjectsV2
+          Parameters:
+            Bucket: ${ssm:/omni-dw/salesforce/${self:provider.stage}/s3/bucket-name~true}
+            Prefix: liveData/
+        MaxConcurrency: 2
+        Label: S3objectkeys
+        ResultPath: null
+        End: true
+      #   Next: processFailedRecords
+      # processFailedRecords:
+      #   Type: Task
+      #   Resource: !GetAtt processFailedRecords.Arn
+      #   Parameters:
+      #     Payload.$: $
+      #   Retry:
+      #     - ErrorEquals:
+      #         - Lambda.ServiceException
+      #         - Lambda.AWSLambdaException
+      #         - Lambda.SdkClientException
+      #         - Lambda.TooManyRequestsException
+      #       IntervalSeconds: 1
+      #       MaxAttempts: 3
+      #       BackoffRate: 2
+      #   End: true
