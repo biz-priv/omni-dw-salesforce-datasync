@@ -129,3 +129,5 @@ stateMachine:
       #       MaxAttempts: 3
       #       BackoffRate: 2
       #   End: true
+  events:
+    - schedule: cron(0 12,2 * * ? *)
