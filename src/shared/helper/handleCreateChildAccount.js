@@ -50,7 +50,7 @@ async function createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, chi
 
 function checkDuplicateEntry(findValue) {
     if (typeof findValue.errorCode != "undefined" && findValue.errorCode.toUpperCase().trim() == "DUPLICATES_DETECTED") {
-        return findValue.duplicateResut.matchResults[0].matchRecords[0].record.Id;
+        return findValue.duplicateResult.matchResults[0].matchRecords[0].record.Id;
     }
     return null;
 }
