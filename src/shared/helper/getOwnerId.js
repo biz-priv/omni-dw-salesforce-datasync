@@ -5,14 +5,19 @@ async function getOwnerID(OWNER_USER_ID_BASE_URL, options, owner) {
         console.info("Owner Id Url : \n", JSON.stringify(ownerIdUrl));
         const OWNER_USER_ID = await axios.get(ownerIdUrl, options);
         console.info("Owner Id Response : \n", OWNER_USER_ID['data']['Id']);
-        let ownerIdRes = OWNER_USER_ID['data']['Id'];
+        let ownerIdRes;
+        if(OWNER_USER_ID['data']['IsActive']){
+            ownerIdRes = OWNER_USER_ID['data']['Id'];
+        } else {
+            ownerIdRes = await getCrmAdminOwnerID(OWNER_USER_ID_BASE_URL, options);
+        }
         if (typeof ownerIdRes != 'undefined') {
             return ownerIdRes;
         }
         return false;
     } catch (error) {
         console.info("Owner Id Error. Processing With Crm Admin : \n", JSON.stringify(error))
-        return getCrmAdminOwnerID(OWNER_USER_ID_BASE_URL, options);
+        return await getCrmAdminOwnerID(OWNER_USER_ID_BASE_URL, options);
     }
 }
 

@@ -102,7 +102,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
         "RecordTypeId": PARENT_ACCOUNT_RECORD_TYPE_ID,
     }
 
-    const PARENT_ACCOUNT_URL = PARENT_ACCOUNT_BASE_URL + parentName.replace(/\//g, '%2F').replace(/\\/g, '%5C');
+    const PARENT_ACCOUNT_URL = PARENT_ACCOUNT_BASE_URL + parentName.replace(/\//g, '%2F').replace(/\\/g, '%5C').replace(/%/g, '%25');
     const [createParentRes, parentIdStatus] = await createParentAccount(PARENT_ACCOUNT_URL, PARENT_ACCOUNT_PARAMS, options);
 
     if (parentIdStatus == false) {
