@@ -12,7 +12,7 @@ module.exports.handler = async (event) => {
     console.info("Event: \n", JSON.stringify(event));
     try {
         if(get(event, 'Payload.type', null) === 'RetryAllErrors'){
-          const result = await retrieveFailedRecords();
+          await retrieveFailedRecords();
         } else {
             const defaultTime = new Date(Date.now() - 46800 * 1000).toISOString();
             const lastProcessedTime = get(await getLatestTimestampFromSSM(), 'Parameter.Value', defaultTime);
@@ -24,6 +24,7 @@ module.exports.handler = async (event) => {
                 return { message: "Data Loaded To S3", recordsCount: result.length };
             } else {
                 console.info("No Records Found");
+                await updateLatestTimestampToSSM(new Date().toISOString());
                 return { message: "No Records Found", recordsCount: 0 };
             }
         }
