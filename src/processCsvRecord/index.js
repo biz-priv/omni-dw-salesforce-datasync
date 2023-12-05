@@ -404,11 +404,12 @@ module.exports.handler = async (event) => {
         const recordCheckResponse = await getItem(process.env.DATASYNC_DYNAMO_TABLE_NAME, get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
         console.log('recordCheckResponse', recordCheckResponse);
         if(Object.keys(recordCheckResponse).length === 0){
-            await insertRecord(process.env.DATASYNC_DYNAMO_TABLE_NAME, event['Payload'])
-        } else if (get(recordCheckResponse, 'Item.status', null) !== 'Success'){   
-            await updateRecordStatus(get(event,'Payload.id'), 'Processing', {});
+            await insertRecord(process.env.DATASYNC_DYNAMO_TABLE_NAME, event['Payload']);
         } else {
-            return { message: "Skipping Record, Already in Success State" }
+        // } else if (get(recordCheckResponse, 'Item.status', null) !== 'Success'){   
+            await updateRecordStatus(get(event,'Payload.id'), 'Processing', {});
+        // } else {
+        //     return { message: "Skipping Record, Already in Success State" }
         } 
         /************************ Generating Access Token ************************/
         let token = get(event, 'Token');

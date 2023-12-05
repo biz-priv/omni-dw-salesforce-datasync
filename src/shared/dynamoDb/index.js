@@ -102,14 +102,16 @@ async function updateRecordStatus(id, newStatus, errorMessage) {
     Key: {
       id,
     },
-    UpdateExpression: 'SET #status = :status, #errorMessage = :errorMessage',
+    UpdateExpression: 'SET #status = :status, #errorMessage = :errorMessage, #lastUpdated = :lastUpdated',
     ExpressionAttributeNames: {
       '#status': 'status',
-      '#errorMessage': 'errorMessage'
+      '#errorMessage': 'errorMessage',
+      '#lastUpdated': 'lastUpdated'
     },
     ExpressionAttributeValues: {
       ':status': newStatus,
-      ':errorMessage': JSON.stringify(errorMessage)
+      ':errorMessage': JSON.stringify(errorMessage),
+      ':lastUpdated': new Date().toISOString()
     },
     ReturnValues: 'ALL_NEW'
   };
