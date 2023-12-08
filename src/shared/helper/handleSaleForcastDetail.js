@@ -1,8 +1,11 @@
 const axios = require('axios');
+const get = require('lodash.get');
+const set = require('lodash.set');
 
 async function fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForcastIdEndpoint, SALES_FORECAST_RECORD_ID_URL, fetchSalesForecastIdPatchBody) {
     try {
         let forecastRecordsDataURl = SALES_FORECAST_RECORD_ID_URL + selecselectedSaleForcastIdEndpoint;
+        set(fetchSalesForecastIdPatchBody, 'Name', trimCharacters(get(fetchSalesForecastIdPatchBody, 'Name', '')));
         console.info("Fetch Sales Forecast Id Url : \n", JSON.stringify(forecastRecordsDataURl));
         console.info("Fetch Sales Forecast Id Body : \n", fetchSalesForecastIdPatchBody);
         let forecastRecordsData = await axios.patch(forecastRecordsDataURl, fetchSalesForecastIdPatchBody, options);
@@ -19,8 +22,17 @@ async function fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForca
     }
 }
 
-async function upsertSalesForecastDetails(options, customerUniqueId, childAccountName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL) {
+function trimCharacters(record) {
+    const maxLength = 72;
+    if (record.length > maxLength) {
+        record = record.slice(0, maxLength);
+    }
+    console.info('After Trim:', record)
+    return record;
+}
 
+async function upsertSalesForecastDetails(options, customerUniqueId, childAccountName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL) {
+    childAccountName = trimCharacters(childAccountName);
     let upsertSalesForecastDetailBody = {
         "Name": `${childAccountName} ${year} ${month}`,
         "Year__c": year,
@@ -33,9 +45,9 @@ async function upsertSalesForecastDetails(options, customerUniqueId, childAccoun
 
     try {
         let upsertSalesForecastDetailUrl = UPSERT_SALES_FORECAST_DETAILS_BASE_URL + customerUniqueId;
-        let upsertSalesForecastDetail = await axios.patch(upsertSalesForecastDetailUrl, upsertSalesForecastDetailBody, options);
         console.info("Upsert Sales Forecast Url : \n" + JSON.stringify(upsertSalesForecastDetailUrl));
         console.info("Upsert Sales Forecast Body : \n" + JSON.stringify(upsertSalesForecastDetailBody));
+        let upsertSalesForecastDetail = await axios.patch(upsertSalesForecastDetailUrl, upsertSalesForecastDetailBody, options);
         console.info("Upsert Sales Forecast Response : \n" + upsertSalesForecastDetail['data']['id']);
         return [upsertSalesForecastDetail['data'], true, upsertSalesForecastDetailBody];
     } catch (error) {
