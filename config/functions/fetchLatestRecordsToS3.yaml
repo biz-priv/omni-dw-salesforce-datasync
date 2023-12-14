@@ -2,7 +2,7 @@
 function:
   handler: src/fetchLatestRecordsToS3/index.handler
   memorySize: 256
-  timeout: 30
+  timeout: 900
   runtime: nodejs18.x
   description: omni dw salesforce sf - fetch latest records to s3 - ${self:provider.stage}
   name: omni-dw-salesforce-datasync-sf-fetch-latest-records-to-s3-${self:provider.stage}
