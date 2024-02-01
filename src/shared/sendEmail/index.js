@@ -1,7 +1,8 @@
 const nodemailer = require("nodemailer");
-const fs = require('fs')
+const fs = require('fs');
+const { log } = require("../utils/logger");
 
-async function sendEmail(mailSubject, body) {
+async function sendEmail(mailSubject, body, functionName) {
     return new Promise(async (resolve, reject) => {
         try {
             const TRANSPORTER = nodemailer.createTransport({
@@ -25,7 +26,8 @@ async function sendEmail(mailSubject, body) {
                 ],
             }
             let sendEmailReport = await TRANSPORTER.sendMail(emailParams);
-            console.info('emailSent : ',sendEmailReport);
+            // console.info('emailSent : ',sendEmailReport);
+            log.INFO(functionName, "emailSent : " + sendEmailReport )
             await fs.unlinkSync('/tmp/salesforceFailedRecords.xlsx');
                 // {
                 //     from: process.env.SMTP_SENDER,
@@ -62,13 +64,14 @@ async function sendEmail(mailSubject, body) {
             // );
             resolve(true);
         } catch (error) {
-            console.error("Send Email Error : \n", error);
+            // console.error("Send Email Error : \n", error);
+            log.ERROR(functionName, "Send Email Error : \n" + error ,500)
             resolve(false);
         }
     })
 }
 
-async function sendProcessedRecordsEmail(mailSubject, body) {
+async function sendProcessedRecordsEmail(mailSubject, body, functionName) {
     return new Promise((resolve, reject) => {
         try {
             const TRANSPORTER = nodemailer.createTransport({
@@ -88,16 +91,19 @@ async function sendProcessedRecordsEmail(mailSubject, body) {
                 },
                 (error, info) => {
                     if (error) {
-                        console.error("Email Error occurred : \n" + JSON.stringify(error));
+                        // console.error("Email Error occurred : \n" + JSON.stringify(error));
+                        log.ERROR(functionName, "Email Error occurred : \n" + JSON.stringify(error) ,500)
                         resolve(error);
                     }
-                    console.info("Email sent : \n", JSON.stringify(info));
+                    // console.info("Email sent : \n", JSON.stringify(info));
+                    log.INFO(functionName, "Email sent : \n" + JSON.stringify(info) )
                     resolve(info);
                 }
             );
             return true;
         } catch (error) {
-            console.error("Error : \n", error);
+            // console.error("Error : \n", error);
+            log.ERROR(functionName, "Error : \n" + error ,500)
             return false;
         }
     })

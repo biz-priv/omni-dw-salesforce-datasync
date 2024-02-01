@@ -3,39 +3,46 @@ const { getLatestTimestampFromSSM, updateLatestTimestampToSSM } = require("../sh
 const get = require('lodash.get');
 const { startXlsxS3Process} = require('../shared/s3/index');
 const AWS = require('aws-sdk');
+const { log } = require("../shared/utils/logger");
 const dynamoDB = new AWS.DynamoDB.DocumentClient({ region: process.env.DEFAULT_AWS });
 
 const s3BucketName = process.env.S3_BUCKET_NAME;
 const s3Path = 'liveData';
 
-module.exports.handler = async (event) => {
-    console.info("Event: \n", JSON.stringify(event));
+let functionName = ""
+module.exports.handler = async (event, context) => {
+    functionName = context.functionName;
+    // console.info("Event: \n", JSON.stringify(event));
+    log.INFO(functionName, "Event: \n" + JSON.stringify(event))
     try {
         if(get(event, 'Payload.type', null) === 'RetryAllErrors'){
-          await retrieveFailedRecords();
+          await retrieveFailedRecords(functionName);
         } else {
             const defaultTime = new Date(Date.now() - 46800 * 1000).toISOString();
-            const lastProcessedTime = get(await getLatestTimestampFromSSM(), 'Parameter.Value', defaultTime);
+            const lastProcessedTime = get(await getLatestTimestampFromSSM(functionName), 'Parameter.Value', defaultTime);
             const queryTime = (lastProcessedTime.replace("T", " ")).replace("Z", "");
-            const result = await handleDBOperation(queryTime);
+            const result = await handleDBOperation(queryTime, functionName);
             if (result.length > 0) {
-                await startXlsxS3Process(s3BucketName, result, s3Path);
-                await updateLatestTimestampToSSM(new Date().toISOString());
+                await startXlsxS3Process(s3BucketName, result, s3Path, functionName);
+                await updateLatestTimestampToSSM(new Date().toISOString(), functionName);
                 return { message: "Data Loaded To S3", recordsCount: result.length };
             } else {
-                console.info("No Records Found");
-                await updateLatestTimestampToSSM(new Date().toISOString());
+                // console.info("No Records Found");
+                log.INFO(functionName, "No Records Found")
+                await updateLatestTimestampToSSM(new Date().toISOString(), functionName);
                 return { message: "No Records Found", recordsCount: 0 };
             }
         }
     } catch (error) {
         console.error("Error : \n", JSON.stringify(error));
+        log.ERROR(functionName, "Error : \n" + JSON.stringify(error), 500)
         throw error;
     }
 };
 
-async function handleDBOperation(queryTime) {
-    console.info('Executing the query for new Records after : ' + queryTime);
+async function handleDBOperation(queryTime, functionName) {
+    // console.info('Executing the query for new Records after : ' + queryTime);
+    log.INFO(functionName, "Executing the query for new Records after : " + queryTime)
     const client = new Client({
         database: process.env.DB_DATABASE,
         host: process.env.DB_HOST,
@@ -45,15 +52,17 @@ async function handleDBOperation(queryTime) {
     });
     await client.connect();
     let sqlQuery = `select * from datamart.sf_sales_summary where (load_create_date >= '${queryTime}' or load_update_date >= '${queryTime}')`;
-    console.info('Sql Query : ', sqlQuery);
+    // console.info('Sql Query : ', sqlQuery);
+    log.INFO(functionName, "Sql Query : " + sqlQuery)
     let dbResponse = await client.query(sqlQuery);
     let result = dbResponse.rows;
     await client.end();
-    console.info("Redshift response length : ", result.length);
+    // console.info("Redshift response length : ", result.length);
+    log.INFO(functionName, "Redshift response length : " + result.length)
     return result;
 }
 
-async function retrieveFailedRecords() {
+async function retrieveFailedRecords(functionName) {
   try {
     const tableName = process.env.DATASYNC_DYNAMO_TABLE_NAME;
     let lastEvaluatedKey = null;
@@ -75,17 +84,21 @@ async function retrieveFailedRecords() {
 
       const scanResult = await dynamoDB.scan(scanParams).promise();
       if ((get(scanResult, 'Items')).length > 0 && get(scanResult, 'LastEvaluatedKey')) {
-        console.log('Retrieved records:', get(scanResult, 'Items'));
-        console.log('LastEvaluatedKey:', get(scanResult, 'LastEvaluatedKey'));
+        // console.log('Retrieved records:', get(scanResult, 'Items'));
+        log.INFO(functionName, "Retrieved records:" + get(scanResult, 'Items'))
+        // console.log('LastEvaluatedKey:', get(scanResult, 'LastEvaluatedKey'));
+        log.INFO(functionName, "LastEvaluatedKey:" + get(scanResult, 'LastEvaluatedKey'))
         lastEvaluatedKey = get(scanResult, 'LastEvaluatedKey', null);
-        await startXlsxS3Process(s3BucketName, get(scanResult, 'Items'), s3Path);
+        await startXlsxS3Process(s3BucketName, get(scanResult, 'Items'), s3Path, functionName);
         return { message: 'Data Loaded To S3', recordsCount: get(scanResult, 'Items').length };
       } else {
         hasMoreRecords = false;
       }
     }
-    console.log('All failed records have been retrieved from DynamoDB.');
+    // console.log('All failed records have been retrieved from DynamoDB.');
+    log.INFO(functionName, "All failed records have been retrieved from DynamoDB.")
   } catch (error) {
-    console.error('Error:', error);
+    // console.error('Error:', error);
+    log.ERROR(functionName, "Error: " + error, 500)
   }
 }

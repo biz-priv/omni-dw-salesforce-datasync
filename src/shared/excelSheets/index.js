@@ -1,7 +1,9 @@
 const excel = require('excel4node');
+const { log } = require('../utils/logger');
 
-function generateExcelSheet(array, worksheet, styleForData) {
-    console.info("array", array);
+function generateExcelSheet(array, worksheet, styleForData, functionName) {
+    // console.info("array", array);
+    log.INFO(functionName, "array" + array)
     let row = 2;
     for (let i in array) {
         let o = 1;
@@ -12,9 +14,10 @@ function generateExcelSheet(array, worksheet, styleForData) {
     }
 }
 
-async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsArr) {
+async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsArr, functionName) {
     try {
-        console.info(JSON.stringify(parentDataArr));
+        // console.info(JSON.stringify(parentDataArr));
+        log.INFO(functionName, JSON.stringify(parentDataArr))
         let workbook = new excel.Workbook();
         let style = workbook.createStyle({
             font: {
@@ -42,7 +45,7 @@ async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsA
             worksheet1.cell(1, 1).string('Status').style(style);
             worksheet1.cell(1, 2).string('Request Params').style(style);
             worksheet1.cell(1, 3).string('Response').style(style);
-            generateExcelSheet(childDataArr, worksheet1, styleForData)
+            generateExcelSheet(childDataArr, worksheet1, styleForData,functionName)
             isDataAvailable = 1;
         }
 
@@ -51,7 +54,7 @@ async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsA
             worksheet2.cell(1, 1).string('Status').style(style);
             worksheet2.cell(1, 2).string('Request Params').style(style);
             worksheet2.cell(1, 3).string('Response').style(style);
-            generateExcelSheet(forecastDetailsArr, worksheet2, styleForData)
+            generateExcelSheet(forecastDetailsArr, worksheet2, styleForData, functionName)
             isDataAvailable = 1;
         }
 
@@ -60,14 +63,15 @@ async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsA
             worksheet3.cell(1, 1).string('Status').style(style);
             worksheet3.cell(1, 2).string('Request Params').style(style);
             worksheet3.cell(1, 3).string('Response').style(style);
-            generateExcelSheet(parentDataArr, worksheet3, styleForData)
+            generateExcelSheet(parentDataArr, worksheet3, styleForData, functionName)
             isDataAvailable = 1;
         }
         if (isDataAvailable) {
             workbook.write('/tmp/salesforceFailedRecords.xlsx');
         }
     } catch (e) {
-        console.error("itemInsert in Excel Error: ", e);
+        // console.error("itemInsert in Excel Error: ", e);
+        log.ERROR(functionName, "itemInsert in Excel Error: " + e, 500)
         return e;
     }
 }

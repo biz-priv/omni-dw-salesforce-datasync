@@ -36,3 +36,5 @@ function:
     SMTP_PASSWORD: ${ssm:/omni-dw/salesforce/${self:provider.stage}/smtp/password~true}
     SMTP_SENDER: ${ssm:/omni-dw/salesforce/${self:provider.stage}/smtp/sender~true}
     SMTP_RECEIVER: ${ssm:/omni-dw/salesforce/${self:provider.stage}/smtp/receiver~true}
+    REGION: ${self:provider.region}
+    SERVICE: ${self:service}

@@ -116,3 +116,113 @@ resources:
                     - logs:CreateLogStream
                     - logs:PutLogEvents
                   Resource: "*"
+    
+    ArchiveFileMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: "/aws/lambda/omni-dw-salesforce-datasync-sf-archive-file-${self:provider.stage}"
+        FilterPattern: "{$.status = 500}"
+        MetricTransformations:
+          - MetricValue: "1"
+            MetricNamespace: "MyNamespace"
+            MetricName: "sf-archive-file-error-metric-${self:provider.stage}"
+    ArchiveFileAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: omni-dw-salesforce-datasync-sf-archive-file-error-alarm-${self:provider.stage}
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: sf-archive-file-error-metric-${self:provider.stage}
+        Namespace: MyNamespace
+        Period: 60
+        Statistic: Sum
+        Threshold: 1
+        ActionsEnabled: true
+        AlarmActions:
+          - Ref: SNSTopic
+
+    FetchLatestRecordsToS3MetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: "/aws/lambda/omni-dw-salesforce-datasync-sf-fetch-latest-records-to-s3-${self:provider.stage}"
+        FilterPattern: "{$.status = 500}"
+        MetricTransformations:
+          - MetricValue: "1"
+            MetricNamespace: "MyNamespace"
+            MetricName: "sf-fetch-latest-records-to-s3-error-metric-${self:provider.stage}"
+    FetchLatestRecordsToS3Alarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: omni-dw-salesforce-datasync-sf-fetch-latest-records-to-s3-error-alarm-${self:provider.stage}
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: sf-fetch-latest-records-to-s3-error-metric-${self:provider.stage}
+        Namespace: MyNamespace
+        Period: 60
+        Statistic: Sum
+        Threshold: 1
+        ActionsEnabled: true
+        AlarmActions:
+          - Ref: SNSTopic
+
+    processCsvRecordMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: "/aws/lambda/omni-dw-salesforce-datasync-sf-process-csv-record-${self:provider.stage}"
+        FilterPattern: "{$.status = 500}"
+        MetricTransformations:
+          - MetricValue: "1"
+            MetricNamespace: "MyNamespace"
+            MetricName: "sf-process-csv-record-error-metric-${self:provider.stage}"
+    processCsvRecordAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: omni-dw-salesforce-datasync-sf-process-csv-record-error-alarm-${self:provider.stage}
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: sf-process-csv-record-error-metric-${self:provider.stage}
+        Namespace: MyNamespace
+        Period: 60
+        Statistic: Sum
+        Threshold: 1
+        ActionsEnabled: true
+        AlarmActions:
+          - Ref: SNSTopic
+
+    processS3ObjectMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: "/aws/lambda/omni-dw-salesforce-datasync-sf-process-s3-object-${self:provider.stage}"
+        FilterPattern: "{$.status = 500}"
+        MetricTransformations:
+          - MetricValue: "1"
+            MetricNamespace: "MyNamespace"
+            MetricName: "sf-process-s3-object-error-metric-${self:provider.stage}"
+    processS3ObjectAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: omni-dw-salesforce-datasync-sf-process-s3-object-error-alarm-${self:provider.stage}
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: sf-process-s3-object-error-metric-${self:provider.stage}
+        Namespace: MyNamespace
+        Period: 60
+        Statistic: Sum
+        Threshold: 1
+        ActionsEnabled: true
+        AlarmActions:
+          - Ref: SNSTopic
+        
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: "omni-dw-salesforce-error-notification-topic-${self:provider.stage}"
+        TopicName: "omni-dw-salesforce-error-notification-topic-${self:provider.stage}"
+    SNSSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: email
+        TopicArn:
+          Ref: SNSTopic
+        # Endpoint: ${ssm:/omni/support/${self:provider.stage}/alarm/email}
+        Endpoint: naveen.chitturi@bizcloudexperts.com

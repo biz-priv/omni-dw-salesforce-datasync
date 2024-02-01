@@ -3,13 +3,17 @@ const { createChildAccount } = require('../shared/helper/handleCreateChildAccoun
 const { fetchSalesForecastRecordIdByPatch, upsertSalesForecastDetails } = require('../shared/helper/handleSaleForcastDetail');
 const { sendProcessedRecordsEmail } = require('../shared/sendEmail/index');
 const Dynamo = require('../shared/dynamoDb/index');
+const { log } = require('../shared/utils/logger');
 
 const TOKEN_BASE_URL = process.env.TOKEN_BASE_URL;
 const CHILD_ACCOUNT_TABLE = process.env.CHILD_ACCOUNT_DYNAMO_TABLE;
 const SALE_FORECAST_TABLE = process.env.SALE_FORECAST_DYNAMO_TABLE;
 
-module.exports.handler = async (event) => {
-    console.info("Event: ", JSON.stringify(event));
+let functionName = ""
+module.exports.handler = async (event, context) => {
+    functionName = context.functionName;
+    // console.info("Event: ", JSON.stringify(event));
+    log.INFO(functionName, "Event: " + JSON.stringify(event))
     let childTableName = process.env.CHILD_ACCOUNT_DYNAMO_TABLE;
     let parentTableName = process.env.PARENT_ACCOUNT_DYNAMO_TABLE;
     let forecastTableName = process.env.SALE_FORECAST_DYNAMO_TABLE;
@@ -32,7 +36,7 @@ module.exports.handler = async (event) => {
         DbDataCount = parentAccountFailureCount + childAccountFailureCount + forecastDetailsFailureCount;
 
         if (parentFailedRecords.length > 0 || childFailedRecords.length > 0 || forecastFailedRecords.length > 0) {
-            let token = await generateAccessToken(TOKEN_BASE_URL);
+            let token = await generateAccessToken(TOKEN_BASE_URL, functionName);
             let accessToken = token['access_token'];
             let instanceUrl = token['instance_url'];
 
@@ -47,10 +51,12 @@ module.exports.handler = async (event) => {
                     'Authorization': `Bearer ${accessToken}`,
                 }
             };
-            const [childRecords, childLoopCount, childAccountSuccessCount, childAccountFailedCount] = await handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BASE_URL, childFailedRecords, options);
+            const [childRecords, childLoopCount, childAccountSuccessCount, childAccountFailedCount] = await handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BASE_URL, childFailedRecords, options, functionName);
             loopCount += childLoopCount;
-            console.info("childAccountSuccessCount :  ", childAccountSuccessCount);
-            console.info("childAccountFailedCount : ", childAccountFailedCount);
+            // console.info("childAccountSuccessCount :  ", childAccountSuccessCount);
+            log.INFO(functionName, "childAccountSuccessCount :  " + childAccountSuccessCount)
+            // console.info("childAccountFailedCount : ", childAccountFailedCount);
+            log.INFO(functionName, "childAccountFailedCount : " + childAccountFailedCount)
 
             if (childRecords.length > 0) {
                 let splitSize = 20;
@@ -60,10 +66,12 @@ module.exports.handler = async (event) => {
                 }
             }
 
-            const [forecastRecords, forecastLoopCount, forecastDetailsSuccessCount, forecastDetailsFailedCount] = await handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, forecastFailedRecords, options);
+            const [forecastRecords, forecastLoopCount, forecastDetailsSuccessCount, forecastDetailsFailedCount] = await handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, forecastFailedRecords, options, functionName);
             loopCount += forecastLoopCount;
-            console.info("forecastDetailsSuccessCount : " + forecastDetailsSuccessCount);
-            console.info("forecastDetailsFailedCount : " + forecastDetailsFailedCount);
+            // console.info("forecastDetailsSuccessCount : " + forecastDetailsSuccessCount);
+            log.INFO(functionName, "forecastDetailsSuccessCount : " + forecastDetailsSuccessCount)
+            // console.info("forecastDetailsFailedCount : " + forecastDetailsFailedCount);
+            log.INFO(functionName, "forecastDetailsFailedCount : " + forecastDetailsFailedCount)
             if (forecastRecords.length > 0) {
                 let splitSize = 20;
                 for (let i = 0; i < forecastRecords.length; i += splitSize) {
@@ -74,11 +82,12 @@ module.exports.handler = async (event) => {
 
             let mailSubject = "SalesForce Re-Processed Records";
             let mailBody = "Hello,<br><br>Total Child Account Re-Processed Failed Records Count : <b>" + childAccountFailureCount + "</b><br>Total Succeeded Child Account Records Count After Re-Processing : <b>" + childAccountSuccessCount + "</b><br>" + "Total Failed Child Account Records Count After Re-Processing : <b>" + childAccountFailedCount + "</b><br><br>" + "Total Sale Forecast Detail Re-Processed Failed Records Count : <b>" + forecastDetailsFailureCount + "</b><br>" + "Total Succeeded Forecast Detail Records Count After Re-Processing : <b>" + forecastDetailsSuccessCount + "</b><br>" + "Total Failed Forecast Detail Records Count After Re-Processing : <b>" + forecastDetailsFailedCount + "</b><Br>Thanks.";
-            await sendProcessedRecordsEmail(mailSubject, mailBody);
+            await sendProcessedRecordsEmail(mailSubject, mailBody, functionName);
         }
     }
     catch (error) {
         console.error(error);
+        log.ERROR(functionName, error, 500)
     }
     if (loopCount == DbDataCount) {
         hasMoreData = "false";
@@ -98,7 +107,7 @@ async function insertProcessedRecordsIntoDynamoDb(tableName, records) {
     }
 }
 
-async function handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BASE_URL, childFailedRecords, options) {
+async function handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BASE_URL, childFailedRecords, options, functionName) {
     let childReqNamesArr = [];
     let childParentIdsArr = [];
     let childDataArr = [];
@@ -144,7 +153,7 @@ async function handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BA
                 "RecordTypeId": childRecordID
             };
 
-            const [createChildAccountRes, createChildExecutionStatus] = await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options);
+            const [createChildAccountRes, createChildExecutionStatus] = await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, functionName);
             if (createChildExecutionStatus != false) {
                 childAccountSuccessCount += 1;
                 let createdAt = new Date().toISOString();
@@ -185,7 +194,7 @@ async function handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BA
     return [childDataArr, childLoopCount, childAccountSuccessCount, childAccountFailedCount];
 }
 
-async function handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, forecastDetailsFailedRecords, options) {
+async function handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, forecastDetailsFailedRecords, options, functionName) {
     let forecastDetailsDataArr = [];
     let forecastLoopCount = 0;
     let forecastDetailsSuccessCount = 0;
@@ -216,9 +225,9 @@ async function handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_
                 "OwnerId": ownerId
             }
 
-            const [selectedSaleForcastId, fetchSalesForecastIdStatus] = await fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForcastIdEndpoint, SALES_FORECAST_RECORD_ID_URL, fetchSalesForecastIdPatchBody);
+            const [selectedSaleForcastId, fetchSalesForecastIdStatus] = await fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForcastIdEndpoint, SALES_FORECAST_RECORD_ID_URL, fetchSalesForecastIdPatchBody, functionName);
             if (fetchSalesForecastIdStatus != false) {
-                const [upsertSalesForecastDetail, upsertForecastStatus, upsertForecastPayload] = await upsertSalesForecastDetails(options, customerUniqueId, childName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL);
+                const [upsertSalesForecastDetail, upsertForecastStatus, upsertForecastPayload] = await upsertSalesForecastDetails(options, customerUniqueId, childName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, functionName);
                 if (upsertForecastStatus != false) {
                     let createdAt = new Date().toISOString();
                     let forecastDetailsDynamoData = {
