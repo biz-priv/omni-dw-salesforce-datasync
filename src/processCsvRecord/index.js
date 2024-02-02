@@ -68,7 +68,6 @@ let loopCount = 0;
 
 async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb, functionName) {
     reProcessedRecords.push(record);
-    // console.info('processing record : ', record)
     log.INFO(functionName, "processing record : " + record);
     owner = record['owner'] ? record['owner'] : "crm admin";
     billingStreet = record['addr1'] ? record['addr1'] : "Not Available";
@@ -332,8 +331,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
                     forecastDataExcellObj['Response'] = upsertSalesForecastDetail;
                     forecastDataExcellArr.push(forecastDataExcellObj);
 
-                    // console.info("Line 401 ==> Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
-                    log.INFO(functionName, "Line 401 ==> Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData))
+                    log.INFO(functionName, "Line 401 ==> Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
                 }
             } else {
                 forecastDataExcellObj['Status'] = "Failed";
@@ -354,8 +352,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
                 forecastDataExcellObj['Response'] = selectedSaleForcastId;
                 forecastDataExcellArr.push(forecastDataExcellObj);
 
-                // console.info("Line 423 ==>Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
-                log.INFO(functionName, "Line 423 ==>Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData))
+                log.INFO(functionName, "Line 423 ==>Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
             }
         }
         else {
@@ -400,17 +397,15 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
     alreadyProcessedBillToNumber.push(billToNumberForQueryInDynamoDb);
 }
 
-let functionName = ""
+let functionName = "";
 module.exports.handler = async (event, context) => {
     functionName = context.functionName;
-    // console.info("Event: \n", JSON.stringify(event));
-    log.INFO(functionName, "Event: \n" + JSON.stringify(event))
+    log.INFO(functionName, "Event: \n" + JSON.stringify(event));
     try {
         set(event, 'Payload.id', get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
         set(event, 'Payload.createdTime', new Date().toISOString());
         const recordCheckResponse = await getItem(process.env.DATASYNC_DYNAMO_TABLE_NAME, get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
-        // console.log('recordCheckResponse', recordCheckResponse);
-        log.INFO(functionName, "recordCheckResponse" + recordCheckResponse)
+        log.INFO(functionName, "recordCheckResponse" + recordCheckResponse);
         if(Object.keys(recordCheckResponse).length === 0){
             await insertRecord(process.env.DATASYNC_DYNAMO_TABLE_NAME, event['Payload']);
         } else {
@@ -430,8 +425,7 @@ module.exports.handler = async (event, context) => {
         CHILD_ACCOUNT_BASE_URL = instanceUrl + process.env.CHILD_ACCOUNT_BASE_URL;
         FETCH_CHILD_ACCOUNT_BASE_URL = instanceUrl + process.env.FETCH_CHILD_ACCOUNT_BASE_URL;
 
-        // console.info('Processing the records of bill to Number : ', event['Payload'][`bill to number`]);
-        log.INFO(functionName, "Processing the records of bill to Number : " + event['Payload'][`bill to number`])
+        log.INFO(functionName, "Processing the records of bill to Number : " + event['Payload'][`bill to number`]);
         await processBillToNumberRecords(event['Payload'], event['Payload'][`bill to number`], functionName);
 
         /************************ Inserting Parent Records To DynamoDB ************************/
@@ -452,42 +446,33 @@ module.exports.handler = async (event, context) => {
             const childAccountFailureCount = childDataExcellArr.length;
             const forecastDetailsFailureCount = forecastDataExcellArr.length;
 
-            //console.info("Parent Account Error Records Count : " + parentAccountFailureCount);
-            log.INFO(functionName, "Parent Account Error Records Count : " + parentAccountFailureCount)
-            //console.info("Child Account Error Records Count : " + childAccountFailureCount);
-            log.INFO(functionName, "Child Account Error Records Count : " + childAccountFailureCount)
-            // console.info("Sale Forecast Detail Error Records Count : " + forecastDetailsFailureCount);
-            log.INFO(functionName, "Sale Forecast Detail Error Records Count : " + forecastDetailsFailureCount)
+            log.INFO(functionName, "Parent Account Error Records Count : " + parentAccountFailureCount);
+            log.INFO(functionName, "Child Account Error Records Count : " + childAccountFailureCount);
+            log.INFO(functionName, "Sale Forecast Detail Error Records Count : " + forecastDetailsFailureCount);
         }
 
-        // console.info('unique bill to Number : ', alreadyProcessedBillToNumber);
-        log.INFO(functionName, "unique bill to Number : " + alreadyProcessedBillToNumber)
-        // console.info('reProcessedRecords : ', JSON.stringify(reProcessedRecords));
-        log.INFO(functionName, "reProcessedRecords : " + JSON.stringify(reProcessedRecords))
+        log.INFO(functionName, "unique bill to Number : " + alreadyProcessedBillToNumber);
+        log.INFO(functionName, "reProcessedRecords : " + JSON.stringify(reProcessedRecords));
 
-        console.info('unique bill to Number Length : ', alreadyProcessedBillToNumber.length);
-        log.INFO(functionName, "unique bill to Number Length : " + alreadyProcessedBillToNumber.length)
-        console.info('reProcessedRecords length : ', reProcessedRecords.length);
-        log.INFO(functionName, "reProcessedRecords length : " + reProcessedRecords.length)
-        console.info('alreadyProcessedRecords length : ', alreadyProcessedRecords.length);
-        log.INFO(functionName, "alreadyProcessedRecords length : " + alreadyProcessedRecords.length)
+        log.INFO(functionName, "unique bill to Number Length : " + alreadyProcessedBillToNumber.length);
+        log.INFO(functionName, "reProcessedRecords length : " + reProcessedRecords.length);
+        log.INFO(functionName, "alreadyProcessedRecords length : " + alreadyProcessedRecords.length);
         alreadyProcessedBillToNumber.length = 0;
         alreadyProcessedRecords.length = 0;
         reProcessedRecords.length = 0;
         parentDataExcellArr.length = 0;
         childDataExcellArr.length = 0;
         forecastDataExcellArr.length = 0;
-        // console.info('ID:', get(event,'Payload.id'));
-        log.INFO(functionName, "ID:" + get(event,'Payload.id'))
+        log.INFO(functionName, "ID:" + get(event,'Payload.id'));
         await updateRecordStatus(get(event,'Payload.id'), 'Success', {});
         return { message: "Processed Record Successfully" }
     } catch (error) {
         console.error("Main Error Message :", get(error, 'message', error));
-        log.ERROR(functionName,"Main Error Message :" + get(error, 'message', error) ,500)
+        log.ERROR(functionName,"Main Error Message :" + get(error, 'message', error) ,500);
         console.error("Main Error Message String :", JSON.stringify(get(error, 'message', error)));
-        log.ERROR(functionName,"Main Error Message String :" + JSON.stringify(get(error, 'message', error)) ,500)
+        log.ERROR(functionName,"Main Error Message String :" + JSON.stringify(get(error, 'message', error)) ,500);
         console.error("Main Full Error Message String :", JSON.stringify(error));
-        log.ERROR(functionName, "Main Full Error Message String :" + JSON.stringify(error) ,500)
+        log.ERROR(functionName, "Main Full Error Message String :" + JSON.stringify(error) ,500);
         await updateRecordStatus(get(event,'Payload.id'), 'Failed', JSON.stringify(get(error, 'message', error)));
         throw error;
     }

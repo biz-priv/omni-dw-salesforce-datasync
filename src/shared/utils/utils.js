@@ -13,7 +13,7 @@ async function csvToJSON(s3Stream, functionName) {
         })
     } catch (error) {
       console.error('Error:', error);
-      log.ERROR(functionName, "Error:" + error, 500)
+      log.ERROR(functionName, "Error:" + error, 500);
       throw error;
     }
   })

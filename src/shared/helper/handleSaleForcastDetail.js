@@ -7,23 +7,18 @@ async function fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForca
     try {
         let forecastRecordsDataURl = SALES_FORECAST_RECORD_ID_URL + selecselectedSaleForcastIdEndpoint;
         set(fetchSalesForecastIdPatchBody, 'Name', trimCharacters(get(fetchSalesForecastIdPatchBody, 'Name', '')));
-        // console.info("Fetch Sales Forecast Id Url : \n", JSON.stringify(forecastRecordsDataURl));
-        log.INFO(functionName, "Fetch Sales Forecast Id Url : \n" + JSON.stringify(forecastRecordsDataURl))
-        //console.info("Fetch Sales Forecast Id Body : \n", fetchSalesForecastIdPatchBody);
-        log.INFO(functionName, "Fetch Sales Forecast Id Body : \n" + fetchSalesForecastIdPatchBody)
+        log.INFO(functionName, "Fetch Sales Forecast Id Url : \n" + JSON.stringify(forecastRecordsDataURl));
+        log.INFO(functionName, "Fetch Sales Forecast Id Body : \n" + fetchSalesForecastIdPatchBody);
         let forecastRecordsData = await axios.patch(forecastRecordsDataURl, fetchSalesForecastIdPatchBody, options);
         let forecastId = forecastRecordsData['data']['id'];
-        //console.info("Fetch Sales Forecast Id Response : \n", forecastRecordsData['data']);
-        log.INFO(functionName, "Fetch Sales Forecast Id Response : \n" + forecastRecordsData['data'])
+        log.INFO(functionName, "Fetch Sales Forecast Id Response : \n" + forecastRecordsData['data']);
         if (typeof forecastId != 'undefined') {
             return [forecastId, true];
         }
         throw new Error("Unable to fetch forecast ID");
     } catch (error) {
-        // console.error("Error From Sales Forecast Record Id Api Full Error: ", JSON.stringify(error));
-        log.ERROR(functionName, "Error From Sales Forecast Record Id Api Full Error: " + JSON.stringify(error), 500)
-        // console.error("Error From Sales Forecast Record Id Api Error: ", JSON.stringify(error.response.data[0]));
-        log.ERROR(functionName, "Error From Sales Forecast Record Id Api Error: " +  JSON.stringify(error.response.data[0]) , 500)
+        log.ERROR(functionName, "Error From Sales Forecast Record Id Api Full Error: " + JSON.stringify(error), 500);
+        log.ERROR(functionName, "Error From Sales Forecast Record Id Api Error: " +  JSON.stringify(error.response.data[0]) , 500);
         throw error;
     }
 }
@@ -51,19 +46,14 @@ async function upsertSalesForecastDetails(options, customerUniqueId, childAccoun
 
     try {
         let upsertSalesForecastDetailUrl = UPSERT_SALES_FORECAST_DETAILS_BASE_URL + customerUniqueId;
-        // console.info("Upsert Sales Forecast Url : \n" + JSON.stringify(upsertSalesForecastDetailUrl));
-        log.INFO(functionName, "Upsert Sales Forecast Url : \n" + JSON.stringify(upsertSalesForecastDetailUrl))
-        // console.info("Upsert Sales Forecast Body : \n" + JSON.stringify(upsertSalesForecastDetailBody));
-        log.INFO(functionName, "Upsert Sales Forecast Body : \n" + JSON.stringify(upsertSalesForecastDetailBody))
+        log.INFO(functionName, "Upsert Sales Forecast Url : \n" + JSON.stringify(upsertSalesForecastDetailUrl));
+        log.INFO(functionName, "Upsert Sales Forecast Body : \n" + JSON.stringify(upsertSalesForecastDetailBody));
         let upsertSalesForecastDetail = await axios.patch(upsertSalesForecastDetailUrl, upsertSalesForecastDetailBody, options);
-        // console.info("Upsert Sales Forecast Response : \n" + upsertSalesForecastDetail['data']['id']);
-        log.INFO(functionName, "Upsert Sales Forecast Response : \n" + upsertSalesForecastDetail['data']['id'])
+        log.INFO(functionName, "Upsert Sales Forecast Response : \n" + upsertSalesForecastDetail['data']['id']);
         return [upsertSalesForecastDetail['data'], true, upsertSalesForecastDetailBody];
     } catch (error) {
-        // console.error("Error From Sales Forecast Api Full Error: " + JSON.stringify(error));
-        log.ERROR(functionName, "Error From Sales Forecast Api Full Error: " + JSON.stringify(error), 500)
-        // console.error("Error From Sales Forecast Api Error: " + JSON.stringify(error.response.data[0]));
-        log.ERROR(functionName,"Error From Sales Forecast Api Error: " + JSON.stringify(error.response.data[0]), 500)
+        log.ERROR(functionName, "Error From Sales Forecast Api Full Error: " + JSON.stringify(error), 500);
+        log.ERROR(functionName,"Error From Sales Forecast Api Error: " + JSON.stringify(error.response.data[0]), 500);
         throw error;
     }
 }

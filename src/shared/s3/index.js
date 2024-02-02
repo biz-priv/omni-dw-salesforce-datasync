@@ -72,19 +72,16 @@ async function moveS3ObjectToArchive(s3BucketName, fileName,functionName) {
                 Key: fileName.replace('liveData/', 'archive/')
             };
             let copyObject = await s3.copyObject(params).promise();
-            // console.info('Copied :',params.Key)
-            log.INFO(functionName, "Copied :" + params.Key)
+            log.INFO(functionName, "Copied :" + params.Key);
             let deleteParams = {
                 Bucket: s3BucketName,
                 Key: fileName,
             }
             let deleteObject = await s3.deleteObject(deleteParams).promise();
-            // console.info("file deleted : ",JSON.stringify(fileName));
-            log.INFO(functionName, "file deleted : " + JSON.stringify(fileName))
+            log.INFO(functionName, "file deleted : " + JSON.stringify(fileName));
             return "completed";
         } catch (error) {
-            // console.error("S3 Copy and delete error : ",JSON.stringify(error));
-            log.ERROR(functionName, "S3 Copy and delete error : " + JSON.stringify(error), 500)
+            log.ERROR(functionName, "S3 Copy and delete error : " + JSON.stringify(error), 500);
             return error;
         }
 }
@@ -101,8 +98,7 @@ async function readS3Object(s3BucketName, fileName, functionName) {
         const data = await csvToJSON(stream, functionName);
         return data;
     } catch (error) {
-        // console.error(error);
-        log.ERROR(functionName, error, 500)
+        log.ERROR(functionName, error, 500);
         return error.message;
     }
 }

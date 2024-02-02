@@ -9,11 +9,10 @@ const TOKEN_BASE_URL = process.env.TOKEN_BASE_URL;
 const CHILD_ACCOUNT_TABLE = process.env.CHILD_ACCOUNT_DYNAMO_TABLE;
 const SALE_FORECAST_TABLE = process.env.SALE_FORECAST_DYNAMO_TABLE;
 
-let functionName = ""
+let functionName = "";
 module.exports.handler = async (event, context) => {
     functionName = context.functionName;
-    // console.info("Event: ", JSON.stringify(event));
-    log.INFO(functionName, "Event: " + JSON.stringify(event))
+    log.INFO(functionName, "Event: " + JSON.stringify(event));
     let childTableName = process.env.CHILD_ACCOUNT_DYNAMO_TABLE;
     let parentTableName = process.env.PARENT_ACCOUNT_DYNAMO_TABLE;
     let forecastTableName = process.env.SALE_FORECAST_DYNAMO_TABLE;
@@ -53,10 +52,8 @@ module.exports.handler = async (event, context) => {
             };
             const [childRecords, childLoopCount, childAccountSuccessCount, childAccountFailedCount] = await handleChildFailedRecords(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_BASE_URL, childFailedRecords, options, functionName);
             loopCount += childLoopCount;
-            // console.info("childAccountSuccessCount :  ", childAccountSuccessCount);
-            log.INFO(functionName, "childAccountSuccessCount :  " + childAccountSuccessCount)
-            // console.info("childAccountFailedCount : ", childAccountFailedCount);
-            log.INFO(functionName, "childAccountFailedCount : " + childAccountFailedCount)
+            log.INFO(functionName, "childAccountSuccessCount :  " + childAccountSuccessCount);
+            log.INFO(functionName, "childAccountFailedCount : " + childAccountFailedCount);
 
             if (childRecords.length > 0) {
                 let splitSize = 20;
@@ -68,10 +65,8 @@ module.exports.handler = async (event, context) => {
 
             const [forecastRecords, forecastLoopCount, forecastDetailsSuccessCount, forecastDetailsFailedCount] = await handleForecastFailedRecords(SALES_FORECAST_RECORD_ID_URL, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, forecastFailedRecords, options, functionName);
             loopCount += forecastLoopCount;
-            // console.info("forecastDetailsSuccessCount : " + forecastDetailsSuccessCount);
-            log.INFO(functionName, "forecastDetailsSuccessCount : " + forecastDetailsSuccessCount)
-            // console.info("forecastDetailsFailedCount : " + forecastDetailsFailedCount);
-            log.INFO(functionName, "forecastDetailsFailedCount : " + forecastDetailsFailedCount)
+            log.INFO(functionName, "forecastDetailsSuccessCount : " + forecastDetailsSuccessCount);
+            log.INFO(functionName, "forecastDetailsFailedCount : " + forecastDetailsFailedCount);
             if (forecastRecords.length > 0) {
                 let splitSize = 20;
                 for (let i = 0; i < forecastRecords.length; i += splitSize) {
@@ -87,7 +82,7 @@ module.exports.handler = async (event, context) => {
     }
     catch (error) {
         console.error(error);
-        log.ERROR(functionName, error, 500)
+        log.ERROR(functionName, error, 500);
     }
     if (loopCount == DbDataCount) {
         hasMoreData = "false";

@@ -26,8 +26,7 @@ async function sendEmail(mailSubject, body, functionName) {
                 ],
             }
             let sendEmailReport = await TRANSPORTER.sendMail(emailParams);
-            // console.info('emailSent : ',sendEmailReport);
-            log.INFO(functionName, "emailSent : " + sendEmailReport )
+            log.INFO(functionName, "emailSent : " + sendEmailReport );
             await fs.unlinkSync('/tmp/salesforceFailedRecords.xlsx');
                 // {
                 //     from: process.env.SMTP_SENDER,
@@ -64,8 +63,7 @@ async function sendEmail(mailSubject, body, functionName) {
             // );
             resolve(true);
         } catch (error) {
-            // console.error("Send Email Error : \n", error);
-            log.ERROR(functionName, "Send Email Error : \n" + error ,500)
+            log.ERROR(functionName, "Send Email Error : \n" + error ,500);
             resolve(false);
         }
     })
@@ -91,19 +89,16 @@ async function sendProcessedRecordsEmail(mailSubject, body, functionName) {
                 },
                 (error, info) => {
                     if (error) {
-                        // console.error("Email Error occurred : \n" + JSON.stringify(error));
-                        log.ERROR(functionName, "Email Error occurred : \n" + JSON.stringify(error) ,500)
+                        log.ERROR(functionName, "Email Error occurred : \n" + JSON.stringify(error) ,500);
                         resolve(error);
                     }
-                    // console.info("Email sent : \n", JSON.stringify(info));
-                    log.INFO(functionName, "Email sent : \n" + JSON.stringify(info) )
+                    log.INFO(functionName, "Email sent : \n" + JSON.stringify(info) );
                     resolve(info);
                 }
             );
             return true;
         } catch (error) {
-            // console.error("Error : \n", error);
-            log.ERROR(functionName, "Error : \n" + error ,500)
+            log.ERROR(functionName, "Error : \n" + error ,500);
             return false;
         }
     })

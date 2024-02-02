@@ -224,5 +224,4 @@ resources:
         Protocol: email
         TopicArn:
           Ref: SNSTopic
-        # Endpoint: ${ssm:/omni/support/${self:provider.stage}/alarm/email}
-        Endpoint: naveen.chitturi@bizcloudexperts.com
+        Endpoint: ${ssm:/omni/support/${self:provider.stage}/alarm/email}

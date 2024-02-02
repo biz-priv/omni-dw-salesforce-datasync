@@ -2,8 +2,7 @@ const excel = require('excel4node');
 const { log } = require('../utils/logger');
 
 function generateExcelSheet(array, worksheet, styleForData, functionName) {
-    // console.info("array", array);
-    log.INFO(functionName, "array" + array)
+    log.INFO(functionName, "array: " + array);
     let row = 2;
     for (let i in array) {
         let o = 1;
@@ -16,8 +15,7 @@ function generateExcelSheet(array, worksheet, styleForData, functionName) {
 
 async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsArr, functionName) {
     try {
-        // console.info(JSON.stringify(parentDataArr));
-        log.INFO(functionName, JSON.stringify(parentDataArr))
+        log.INFO(functionName, JSON.stringify(parentDataArr));
         let workbook = new excel.Workbook();
         let style = workbook.createStyle({
             font: {
@@ -70,8 +68,7 @@ async function itemInsertIntoExcel(parentDataArr, childDataArr, forecastDetailsA
             workbook.write('/tmp/salesforceFailedRecords.xlsx');
         }
     } catch (e) {
-        // console.error("itemInsert in Excel Error: ", e);
-        log.ERROR(functionName, "itemInsert in Excel Error: " + e, 500)
+        log.ERROR(functionName, "itemInsert in Excel Error: " + e, 500);
         return e;
     }
 }

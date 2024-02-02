@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const { log } = require('../utils/logger');
 const ssm = new AWS.SSM();
 
 AWS.config.update({ region: 'us-east-1' });
@@ -12,8 +13,7 @@ async function getLatestTimestampFromSSM(timestamp,functionName) {
         timestamp = await ssm.getParameter(ssmOptions).promise();
         return timestamp;
     } catch (error) {
-        // console.info("Get Timestamp Error : \n", error);
-        log.ERROR(functionName, "Get Timestamp Error : \n" +  error, 500)
+        log.ERROR(functionName, "Get Timestamp Error : \n" +  error, 500);
         return error;
     }
 }
@@ -29,8 +29,7 @@ async function updateLatestTimestampToSSM(timestamp, functionName) {
         let updateTimestamp = await ssm.putParameter(params).promise();
         return true;
     } catch (error) {
-        // console.error("Put Timestamp Error : \n", error);
-        log.ERROR(functionName, "Put Timestamp Error : \n" + error, 500)
+        log.ERROR(functionName, "Put Timestamp Error : \n" + error, 500);
         return error;
     }
 }
