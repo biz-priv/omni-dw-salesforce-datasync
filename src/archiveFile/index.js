@@ -7,7 +7,7 @@ module.exports.handler = async (event, context) => {
     functionName = context.functionName;
     log.INFO(functionName, "Event:" + JSON.stringify(event));
     if(get(event, 'Payload.Key', null )){
-        await moveS3ObjectToArchive(process.env.S3_BUCKET_NAME, get(event, 'Payload.Key'));
+        await moveS3ObjectToArchive(process.env.S3_BUCKET_NAME, get(event, 'Payload.Key'), functionName);
         return { message: "File Archived" };
     } else {
         log.INFO(functionName, "No File");
