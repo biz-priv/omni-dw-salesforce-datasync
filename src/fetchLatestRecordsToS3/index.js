@@ -64,26 +64,27 @@ async function retrieveFailedRecords(functionName) {
     let hasMoreRecords = true;
 
     while (hasMoreRecords) {
-      const scanParams = {
+      const queryParams = {
         TableName: tableName,
-        Limit: 300,
-        ExclusiveStartKey: lastEvaluatedKey,
-        FilterExpression: '#statusAlias = :statusValue',
+        IndexName: 'status-createdTime-index',
+        KeyConditionExpression: '#statusAlias = :statusValue',
         ExpressionAttributeNames: {
           '#statusAlias': 'status',
         },
         ExpressionAttributeValues: {
           ':statusValue': 'Failed',
-        }
+        },
+        Limit: 300,
+        ExclusiveStartKey: lastEvaluatedKey,
       };
-
-      const scanResult = await dynamoDB.scan(scanParams).promise();
-      if ((get(scanResult, 'Items')).length > 0 && get(scanResult, 'LastEvaluatedKey')) {
-        log.INFO(functionName, "Retrieved records:" + get(scanResult, 'Items'));
-        log.INFO(functionName, "LastEvaluatedKey:" + get(scanResult, 'LastEvaluatedKey'));
-        lastEvaluatedKey = get(scanResult, 'LastEvaluatedKey', null);
-        await startXlsxS3Process(s3BucketName, get(scanResult, 'Items'), s3Path, functionName);
-        return { message: 'Data Loaded To S3', recordsCount: get(scanResult, 'Items').length };
+  
+      const queryResult = await dynamoDB.query(queryParams).promise();  
+      if ((get(queryResult, 'Items')).length > 0) {
+        log.INFO(functionName, "Retrieved records:" + get(queryResult, 'Items'));
+        log.INFO(functionName, "LastEvaluatedKey:" + get(queryResult, 'LastEvaluatedKey'));
+        await startXlsxS3Process(s3BucketName, get(queryResult, 'Items'), s3Path, functionName);
+        lastEvaluatedKey = get(queryResult, 'LastEvaluatedKey', null);
+        hasMoreRecords = !!lastEvaluatedKey;
       } else {
         hasMoreRecords = false;
       }
