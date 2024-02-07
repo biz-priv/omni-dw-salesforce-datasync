@@ -103,7 +103,8 @@ stateMachine:
                   IntervalSeconds: 1
                   MaxAttempts: 3
                   BackoffRate: 2
-              End: true
+              Next: sendReports
+              # End: true
         ItemReader:
           Resource: arn:aws:states:::s3:listObjectsV2
           Parameters:
@@ -112,6 +113,21 @@ stateMachine:
         MaxConcurrency: 2
         Label: S3objectkeys
         ResultPath: null
+        End: true
+      sendReports:
+        Type: Task
+        Resource: !GetAtt sendReports.Arn
+        Parameters:
+          executionArn.$: '$$.Execution.Id'
+        Retry:
+          - ErrorEquals:
+              - Lambda.ServiceException
+              - Lambda.AWSLambdaException
+              - Lambda.SdkClientException
+              - Lambda.TooManyRequestsException
+            IntervalSeconds: 1
+            MaxAttempts: 3
+            BackoffRate: 2
         End: true
       #   Next: processFailedRecords
       # processFailedRecords:
