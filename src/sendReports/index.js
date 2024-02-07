@@ -3,6 +3,7 @@ const AWS = require('aws-sdk');
 const { log } = require('../shared/utils/logger');
 const { SNS_TOPIC_ARN } = process.env;
 const sns = new AWS.SNS({ region: process.env.REGION });
+const moment = require('moment');
 
 let functionName = "";
 
@@ -36,7 +37,7 @@ module.exports.handler = async (event, context) => {
     }).promise();
 
     const executionArns = executionsData.executions.map(execution => execution.executionArn);              //From the executions making a array of executionArn from executionsData
-    console.log("Execution ARNs:", executionArns);
+    log.INFO(functionName, "Execution ARNs:" + executionArns);
 
     const executionMapRunArns = [];
 
@@ -50,7 +51,7 @@ module.exports.handler = async (event, context) => {
       }
     }
 
-    console.log("Execution MapRun ARNs:", executionMapRunArns);
+    log.INFO(functionName, "Execution MapRun ARNs:" +  executionMapRunArns);
 
     let succeeded = 0;
     let failed = 0;
@@ -67,9 +68,12 @@ module.exports.handler = async (event, context) => {
       pending += get(data, 'executionCounts.pending', 0);
     }
 
-    console.log("mail", succeeded, failed, running, pending);
+    log.INFO(functionName, "Values to sent in mail" + "succeeded: " + succeeded + "failed: " + failed + "running: " + running + "pending" + pending)
+
+    const today = moment().format('YYYY-MM-DD');
     const snsparams = {                                                                                         // Sending mail to Support Team.
       Message: `Hi Team, \n This Report is for salesforce \n Step Function Name: ${stepFunctionName} \n Total number of records loded to s3: ${dataLoadedToS3Count} \n Total number of records succeeded: ${succeeded} \n Total number of records failed: ${failed}, \n Total number of records running: ${running} \n Total number of records pending: ${pending} . \n `,
+      Subject: `Salesforce Report - ${today}`,
       TopicArn: SNS_TOPIC_ARN,
     };
     await sns.publish(snsparams).promise();
@@ -77,6 +81,7 @@ module.exports.handler = async (event, context) => {
     return { message: "Reports Sent Successfully. " };
   } catch (error) {
     console.error("Error while sending reports: ",error, error.stack);
+    log.ERROR(functionName, "Error while sending reports: " + error + error.stack, 500)
     throw error;
   }
 };
