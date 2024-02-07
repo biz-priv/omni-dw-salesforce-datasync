@@ -113,7 +113,7 @@ stateMachine:
         MaxConcurrency: 2
         Label: S3objectkeys
         ResultPath: null
-        End: true
+        # End: true
       sendReports:
         Type: Task
         Resource: !GetAtt sendReports.Arn
