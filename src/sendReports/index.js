@@ -68,7 +68,7 @@ module.exports.handler = async (event, context) => {
       pending += get(data, 'executionCounts.pending', 0);
     }
 
-    log.INFO(functionName, "Values to sent in mail" + "succeeded: " + succeeded + "failed: " + failed + "running: " + running + "pending" + pending)
+    log.INFO(functionName, "Values to sent in mail " + " succeeded: " + succeeded + " failed: " + failed + " running: " + running + " pending " + pending);
 
     const today = moment().format('YYYY-MM-DD');
     const snsparams = {                                                                                         // Sending mail to Support Team.
@@ -81,7 +81,7 @@ module.exports.handler = async (event, context) => {
     return { message: "Reports Sent Successfully. " };
   } catch (error) {
     console.error("Error while sending reports: ",error, error.stack);
-    log.ERROR(functionName, "Error while sending reports: " + error + error.stack, 500)
+    log.ERROR(functionName, "Error while sending reports: " + error + error.stack, 500);
     throw error;
   }
 };
