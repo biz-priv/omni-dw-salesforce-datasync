@@ -19,6 +19,7 @@ stateMachine:
             IntervalSeconds: 1
             MaxAttempts: 3
             BackoffRate: 2
+        ResultPath: $.fetchLatestRecordsToS3Result
         Next: s3ObjectsMap
       s3ObjectsMap:
         Type: Map
@@ -118,6 +119,7 @@ stateMachine:
         Resource: !GetAtt sendReports.Arn
         Parameters:
           executionArn.$: '$$.Execution.Id'
+          dataLoadedToS3.$: $.fetchLatestRecordsToS3Result.recordsCount
         Retry:
           - ErrorEquals:
               - Lambda.ServiceException
