@@ -1,5 +1,7 @@
 const csv = require('fast-csv')
-async function csvToJSON(s3Stream) {
+const { log } = require('./logger')
+
+async function csvToJSON(s3Stream, functionName) {
   return new Promise((resolve) => {
     try {
       let data = []
@@ -11,6 +13,7 @@ async function csvToJSON(s3Stream) {
         })
     } catch (error) {
       console.error('Error:', error);
+      log.ERROR(functionName, "Error:" + error, 500);
       throw error;
     }
   })

@@ -6,6 +6,7 @@ const { getOwnerID } = require('../shared/helper/getOwnerId');
 const { createChildAccount } = require('../shared/helper/handleCreateChildAccount');
 const { createParentAccount } = require('../shared/helper/handleCreateParentAccount');
 const { upsertSalesForecastDetails, fetchSalesForecastRecordIdByPatch } = require('../shared/helper/handleSaleForcastDetail');
+const { log } = require("../shared/utils/logger");
 
 const PARENT_ACCOUNT_RECORD_TYPE_ID = process.env.PARENT_RECORDS_TYPE_ID;
 const CHILD_ACCOUNT_RECORD_TYPE_ID = process.env.CHILD_RECORD_TYPE_ID;
@@ -65,9 +66,9 @@ let childType = "Customer";
 
 let loopCount = 0;
 
-async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb) {
+async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb, functionName) {
     reProcessedRecords.push(record);
-    console.info('processing record : ', record)
+    log.INFO(functionName, "processing record : " + record);
     owner = record['owner'] ? record['owner'] : "crm admin";
     billingStreet = record['addr1'] ? record['addr1'] : "Not Available";
     city = record['city'] ? record['city'] : "Not Available";
@@ -103,7 +104,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
     }
 
     const PARENT_ACCOUNT_URL = PARENT_ACCOUNT_BASE_URL + parentName.replace(/\//g, '%2F').replace(/\\/g, '%5C').replace(/%/g, '%25');
-    const [createParentRes, parentIdStatus] = await createParentAccount(PARENT_ACCOUNT_URL, PARENT_ACCOUNT_PARAMS, options);
+    const [createParentRes, parentIdStatus] = await createParentAccount(PARENT_ACCOUNT_URL, PARENT_ACCOUNT_PARAMS, options, functionName);
 
     if (parentIdStatus == false) {
         let parentResData = createParentRes;
@@ -156,7 +157,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
 
         /************************ Generating Owner Id ************************/
 
-        const ownerId = await getOwnerID(OWNER_USER_ID_BASE_URL, options, owner);
+        const ownerId = await getOwnerID(OWNER_USER_ID_BASE_URL, options, owner, functionName);
 
         /************************ Creating Child Account ************************/
         const CHILD_ACCOUNT_URL = CHILD_ACCOUNT_BASE_URL + `${sourceSystem}-${division__c}-${billToNumber}-${controllingCustomerNumber}`;
@@ -180,7 +181,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
             "RecordTypeId": CHILD_ACCOUNT_RECORD_TYPE_ID
         };
 
-        const [createChildAccountRes, createChildExecutionStatus] = await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, FETCH_CHILD_ACCOUNT_BASE_URL);
+        const [createChildAccountRes, createChildExecutionStatus] = await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, FETCH_CHILD_ACCOUNT_BASE_URL, functionName);
         let childDynamoData = {
             PutRequest: {
                 Item: {
@@ -268,10 +269,10 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
                 "OwnerId": ownerId
             }
             /************************ Fetch Record Id ************************/
-            const [selectedSaleForcastId, fetchSalesForecastIdStatus] = await fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForcastIdEndpoint, SALES_FORECAST_RECORD_ID_URL, fetchSalesForecastIdPatchBody);
+            const [selectedSaleForcastId, fetchSalesForecastIdStatus] = await fetchSalesForecastRecordIdByPatch(options, selecselectedSaleForcastIdEndpoint, SALES_FORECAST_RECORD_ID_URL, fetchSalesForecastIdPatchBody, functionName);
             if (fetchSalesForecastIdStatus != false) {
                 /************************ Upsert Sales Forecast Record ************************/
-                const [upsertSalesForecastDetail, upsertForecastStatus, upsertForecastPayload] = await upsertSalesForecastDetails(options, customerUniqueId, childName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL);
+                const [upsertSalesForecastDetail, upsertForecastStatus, upsertForecastPayload] = await upsertSalesForecastDetails(options, customerUniqueId, childName, year, month, totalCharge, totalCost, selectedSaleForcastId, UPSERT_SALES_FORECAST_DETAILS_BASE_URL, functionName);
                 if (upsertForecastStatus != false) {
                     saleForecastData = {
                         PutRequest: {
@@ -330,7 +331,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
                     forecastDataExcellObj['Response'] = upsertSalesForecastDetail;
                     forecastDataExcellArr.push(forecastDataExcellObj);
 
-                    console.info("Line 401 ==> Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
+                    log.INFO(functionName, "Line 401 ==> Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
                 }
             } else {
                 forecastDataExcellObj['Status'] = "Failed";
@@ -351,7 +352,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
                 forecastDataExcellObj['Response'] = selectedSaleForcastId;
                 forecastDataExcellArr.push(forecastDataExcellObj);
 
-                console.info("Line 423 ==>Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
+                log.INFO(functionName, "Line 423 ==>Unable to send Forecast Detail Payload : " + JSON.stringify(saleForecastData));
             }
         }
         else {
@@ -396,13 +397,15 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
     alreadyProcessedBillToNumber.push(billToNumberForQueryInDynamoDb);
 }
 
-module.exports.handler = async (event) => {
-    console.info("Event: \n", JSON.stringify(event));
+let functionName = "";
+module.exports.handler = async (event, context) => {
+    functionName = context.functionName;
+    log.INFO(functionName, "Event: \n" + JSON.stringify(event));
     try {
         set(event, 'Payload.id', get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
         set(event, 'Payload.createdTime', new Date().toISOString());
         const recordCheckResponse = await getItem(process.env.DATASYNC_DYNAMO_TABLE_NAME, get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
-        console.log('recordCheckResponse', recordCheckResponse);
+        log.INFO(functionName, "recordCheckResponse" + recordCheckResponse);
         if(Object.keys(recordCheckResponse).length === 0){
             await insertRecord(process.env.DATASYNC_DYNAMO_TABLE_NAME, event['Payload']);
         } else {
@@ -422,8 +425,8 @@ module.exports.handler = async (event) => {
         CHILD_ACCOUNT_BASE_URL = instanceUrl + process.env.CHILD_ACCOUNT_BASE_URL;
         FETCH_CHILD_ACCOUNT_BASE_URL = instanceUrl + process.env.FETCH_CHILD_ACCOUNT_BASE_URL;
 
-        console.info('Processing the records of bill to Number : ', event['Payload'][`bill to number`]);
-        await processBillToNumberRecords(event['Payload'], event['Payload'][`bill to number`]);
+        log.INFO(functionName, "Processing the records of bill to Number : " + event['Payload'][`bill to number`]);
+        await processBillToNumberRecords(event['Payload'], event['Payload'][`bill to number`], functionName);
 
         /************************ Inserting Parent Records To DynamoDB ************************/
         if (parentDataArr.length > 0) {
@@ -443,30 +446,33 @@ module.exports.handler = async (event) => {
             const childAccountFailureCount = childDataExcellArr.length;
             const forecastDetailsFailureCount = forecastDataExcellArr.length;
 
-            console.info("Parent Account Error Records Count : " + parentAccountFailureCount);
-            console.info("Child Account Error Records Count : " + childAccountFailureCount);
-            console.info("Sale Forecast Detail Error Records Count : " + forecastDetailsFailureCount);
+            log.INFO(functionName, "Parent Account Error Records Count : " + parentAccountFailureCount);
+            log.INFO(functionName, "Child Account Error Records Count : " + childAccountFailureCount);
+            log.INFO(functionName, "Sale Forecast Detail Error Records Count : " + forecastDetailsFailureCount);
         }
 
-        console.info('unique bill to Number : ', alreadyProcessedBillToNumber);
-        console.info('reProcessedRecords : ', JSON.stringify(reProcessedRecords));
+        log.INFO(functionName, "unique bill to Number : " + alreadyProcessedBillToNumber);
+        log.INFO(functionName, "reProcessedRecords : " + JSON.stringify(reProcessedRecords));
 
-        console.info('unique bill to Number Length : ', alreadyProcessedBillToNumber.length);
-        console.info('reProcessedRecords length : ', reProcessedRecords.length);
-        console.info('alreadyProcessedRecords length : ', alreadyProcessedRecords.length);
+        log.INFO(functionName, "unique bill to Number Length : " + alreadyProcessedBillToNumber.length);
+        log.INFO(functionName, "reProcessedRecords length : " + reProcessedRecords.length);
+        log.INFO(functionName, "alreadyProcessedRecords length : " + alreadyProcessedRecords.length);
         alreadyProcessedBillToNumber.length = 0;
         alreadyProcessedRecords.length = 0;
         reProcessedRecords.length = 0;
         parentDataExcellArr.length = 0;
         childDataExcellArr.length = 0;
         forecastDataExcellArr.length = 0;
-        console.info('ID:', get(event,'Payload.id'));
+        log.INFO(functionName, "ID:" + get(event,'Payload.id'));
         await updateRecordStatus(get(event,'Payload.id'), 'Success', {});
         return { message: "Processed Record Successfully" }
     } catch (error) {
         console.error("Main Error Message :", get(error, 'message', error));
+        log.ERROR(functionName,"Main Error Message :" + get(error, 'message', error) ,500);
         console.error("Main Error Message String :", JSON.stringify(get(error, 'message', error)));
+        log.ERROR(functionName,"Main Error Message String :" + JSON.stringify(get(error, 'message', error)) ,500);
         console.error("Main Full Error Message String :", JSON.stringify(error));
+        log.ERROR(functionName, "Main Full Error Message String :" + JSON.stringify(error) ,500);
         await updateRecordStatus(get(event,'Payload.id'), 'Failed', JSON.stringify(get(error, 'message', error)));
         throw error;
     }

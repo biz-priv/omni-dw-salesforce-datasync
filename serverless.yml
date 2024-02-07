@@ -45,6 +45,7 @@ functions:
   processCsvRecord: ${file(config/functions/processCsvRecord.yaml):function}
   # processFailedRecords: ${file(config/functions/processFailedRecords.yaml):function}
   archiveFile: ${file(config/functions/archiveFile.yaml):function}
+  sendReports: ${file(config/functions/sendReports.yaml):function}
 
 stepFunctions:
   stateMachines:
