@@ -18,8 +18,7 @@ module.exports.handler = async (event, context) => {
     const stepfunctions = new AWS.StepFunctions();
 
     const params = {
-      executionArn,
-      // maxResults: 100
+      executionArn
     };
 
     const data = await stepfunctions.listMapRuns(params).promise();                    //Getting 1st mapRunArn using executionArn
@@ -27,13 +26,9 @@ module.exports.handler = async (event, context) => {
     log.INFO(functionName, "mapRunArns" + mapRunArns);
 
     const mapRunArn = mapRunArns[0];
-    // const maxResults = 30;
-    // const statusFilter = "SUCCEEDED";
 
     const executionsData = await stepfunctions.listExecutions({                      // Gets all the Execution of 1st mapRunArn
       mapRunArn: mapRunArn,
-      // maxResults: maxResults,
-      // statusFilter: statusFilter
     }).promise();
 
     const executionArns = executionsData.executions.map(execution => execution.executionArn);              //From the executions making a array of executionArn from executionsData
@@ -68,32 +63,12 @@ module.exports.handler = async (event, context) => {
     log.INFO(functionName, "Values, to sent in mail " + " succeeded: " + succeeded + " failed: " + failed );
 
     const today = moment().format('YYYY-MM-DD');
-    // const snsparams = {                                                                                         // Sending mail to Support Team.
-    //   Message: `Hi Team, \n This Report is for salesforce \n Step Function Name: ${stepFunctionName} \n Total number of records loded to s3: ${dataLoadedToS3Count} \n Total number of records succeeded: ${succeeded} \n Total number of records failed: ${failed}, \n `,
-    //   Subject: `Salesforce Report - ${today}`,
-    //   TopicArn: SNS_TOPIC_ARN,
-    // };
-    // await sns.publish(snsparams).promise();
-    const snsparams = {
-      Message: `
-          <html>
-              <body>
-                  <h2>Hi Team,</h2>
-                  <p>This Report is for Salesforce Datasync Job:</p>
-                  <ul>
-                      <li><strong>Step Function Name:</strong> ${stepFunctionName}</li>
-                      <li><strong>Total number of records processed:</strong> ${dataLoadedToS3Count}</li>
-                      <li><strong>Number of successful records:</strong> ${succeeded}</li>
-                      <li><strong>Number of failed records:</strong> ${failed}</li>
-                  </ul>
-              </body>
-          </html>
-      `,
+    const snsparams = {                                                                                         // Sending mail to Support Team.
+      Message: `Hi Team, \n This Report is for Salesforce Datasync Job: \n Step Function Name: ${stepFunctionName} \n Total number of records processed: ${dataLoadedToS3Count} \n Number of successful records : ${succeeded} \n Number of failed records: ${failed}, \n `,
       Subject: `Salesforce Report - ${today}`,
       TopicArn: SNS_TOPIC_ARN,
-  };
-  
-  await sns.publish(snsparams).promise();
+    };
+    await sns.publish(snsparams).promise();
 
     return { message: "Reports Sent Successfully. " };
   } catch (error) {
