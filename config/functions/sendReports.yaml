@@ -2,7 +2,7 @@
 function:
   handler: src/sendReports/index.handler
   memorySize: 256
-  timeout: 30
+  timeout: 900
   runtime: nodejs18.x
   description: omni dw salesforce sf - send Reports - ${self:provider.stage}
   name: omni-dw-salesforce-datasync-sf-send-reports-${self:provider.stage}
