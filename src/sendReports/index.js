@@ -55,8 +55,7 @@ module.exports.handler = async (event, context) => {
 
     let succeeded = 0;
     let failed = 0;
-    let running = 0;
-    let pending = 0;
+
 
     for (const executionMapRunArn of executionMapRunArns) {
       const mapRunArnparams = { mapRunArn: executionMapRunArn };
@@ -64,15 +63,13 @@ module.exports.handler = async (event, context) => {
       const data = await stepfunctions.describeMapRun(mapRunArnparams).promise();                                // Getting data of mapRunArn's like succeeded,failed,running,pending
       succeeded += get(data, 'executionCounts.succeeded', 0);
       failed += get(data, 'executionCounts.failed', 0);
-      running += get(data, 'executionCounts.running', 0);
-      pending += get(data, 'executionCounts.pending', 0);
     }
 
-    log.INFO(functionName, "Values to sent in mail " + " succeeded: " + succeeded + " failed: " + failed + " running: " + running + " pending " + pending);
+    log.INFO(functionName, "Values, to sent in mail " + " succeeded: " + succeeded + " failed: " + failed );
 
     const today = moment().format('YYYY-MM-DD');
     const snsparams = {                                                                                         // Sending mail to Support Team.
-      Message: `Hi Team, \n This Report is for salesforce \n Step Function Name: ${stepFunctionName} \n Total number of records loded to s3: ${dataLoadedToS3Count} \n Total number of records succeeded: ${succeeded} \n Total number of records failed: ${failed}, \n Total number of records running: ${running} \n Total number of records pending: ${pending} . \n `,
+      Message: `Hi Team, \n This Report is for salesforce \n Step Function Name: ${stepFunctionName} \n Total number of records loded to s3: ${dataLoadedToS3Count} \n Total number of records succeeded: ${succeeded} \n Total number of records failed: ${failed}, \n `,
       Subject: `Salesforce Report - ${today}`,
       TopicArn: SNS_TOPIC_ARN,
     };
