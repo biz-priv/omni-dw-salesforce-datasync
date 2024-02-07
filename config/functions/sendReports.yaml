@@ -1,17 +1,17 @@
 ---
 function:
-  handler: src/archiveFile/index.handler
+  handler: src/sendReports/index.handler
   memorySize: 256
-  timeout: 30
+  timeout: 900
   runtime: nodejs18.x
-  description: omni dw salesforce sf - archive file - ${self:provider.stage}
-  name: omni-dw-salesforce-datasync-sf-archive-file-${self:provider.stage}
+  description: omni dw salesforce sf - send Reports - ${self:provider.stage}
+  name: omni-dw-salesforce-datasync-sf-send-reports-${self:provider.stage}
   layers:
     - { Ref: OmniSalesforceDatasyncLayerLambdaLayer }
   package:
     patterns:
       - "!**/*"
-      - "src/archiveFile/**"
+      - "src/sendReports/**"
       - "src/shared/**"
   vpc:
     securityGroupIds:
@@ -19,7 +19,6 @@ function:
     subnetIds:
       - ${ssm:/omni-dw/${self:provider.stage}/lambda/subnetA}
   environment:
-    S3_BUCKET_NAME: ${ssm:/omni-dw/salesforce/${self:provider.stage}/s3/bucket-name~true}
-    TOKEN_BASE_URL: ${ssm:/omni-dw/salesforce/${self:provider.stage}/baseUrl/token}
     REGION: ${self:provider.region}
     SERVICE: ${self:service}
+    SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}

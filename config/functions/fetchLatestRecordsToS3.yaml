@@ -27,3 +27,5 @@ function:
     DB_DATABASE: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/name~true}
     DB_USER: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/user~true}
     DATASYNC_DYNAMO_TABLE_NAME: !Ref datasyncTable
+    REGION: ${self:provider.region}
+    SERVICE: ${self:service}

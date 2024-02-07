@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 let XLSX = require('xlsx');
 const { csvToJSON } = require("../utils/utils");
+const { log } = require("../utils/logger");
 
 async function startXlsxS3Process(s3BucketName, requestData, path) {
     let chunkSize = 300;
@@ -63,7 +64,7 @@ async function fetchAllKeysFromS3(s3BucketName, token) {
     });
 }
 
-async function moveS3ObjectToArchive(s3BucketName, fileName) {
+async function moveS3ObjectToArchive(s3BucketName, fileName,functionName) {
         try {
             let params = {
                 Bucket: s3BucketName,
@@ -71,21 +72,21 @@ async function moveS3ObjectToArchive(s3BucketName, fileName) {
                 Key: fileName.replace('liveData/', 'archive/')
             };
             let copyObject = await s3.copyObject(params).promise();
-            console.info('Copied :', params.Key)
+            log.INFO(functionName, "Copied :" + params.Key);
             let deleteParams = {
                 Bucket: s3BucketName,
                 Key: fileName,
             }
             let deleteObject = await s3.deleteObject(deleteParams).promise();
-            console.info("file deleted : ",JSON.stringify(fileName));
+            log.INFO(functionName, "file deleted : " + JSON.stringify(fileName));
             return "completed";
         } catch (error) {
-            console.error("S3 Copy and delete error : ",JSON.stringify(error));
-            throw error;
+            log.ERROR(functionName, "S3 Copy and delete error : " + JSON.stringify(error), 500);
+            return error;
         }
 }
 
-async function readS3Object(s3BucketName, fileName) {
+async function readS3Object(s3BucketName, fileName, functionName) {
     try {
         let getParams = {
             Bucket: s3BucketName,
@@ -94,10 +95,10 @@ async function readS3Object(s3BucketName, fileName) {
         const stream = s3.getObject(getParams).createReadStream().on('error', error => {
             return error
         });
-        const data = await csvToJSON(stream);
+        const data = await csvToJSON(stream, functionName);
         return data;
     } catch (error) {
-        console.error(error);
+        log.ERROR(functionName, error, 500);
         return error.message;
     }
 }

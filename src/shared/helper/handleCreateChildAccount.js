@@ -1,18 +1,19 @@
 
 const axios = require('axios');
 const { getCrmAdminOwnerID } = require('./getOwnerId');
+const { log } = require('../utils/logger');
 
-async function createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, FETCH_CHILD_ACCOUNT_BASE_URL) {
+async function createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, FETCH_CHILD_ACCOUNT_BASE_URL, functionName) {
     let resChildAccountId = "";
     try {
-        console.info("Create Child Account Url : \n", JSON.stringify(CHILD_ACCOUNT_URL));
-        console.info("Create Child Account Body : \n", JSON.stringify(childAccountBody));
+        log.INFO(functionName, "Create Child Account Url : \n" + JSON.stringify(CHILD_ACCOUNT_URL));
+        log.INFO(functionName, "Create Child Account Body : \n" + JSON.stringify(childAccountBody));
         const createChildAccountReq = await axios.patch(CHILD_ACCOUNT_URL, childAccountBody, options);
-        console.info("Create Child Account Response : \n", createChildAccountReq['data']);
+        log.INFO(functionName, "Create Child Account Response : \n" + createChildAccountReq['data']);
         resChildAccountId = createChildAccountReq.data.id;
         return [resChildAccountId, true];
     } catch (error) {
-        console.error("Create Child Account Error. Checking For Duplicates: \n" +JSON.stringify(error));
+        log.ERROR(functionName,"Create Child Account Error. Checking For Duplicates: \n" +JSON.stringify(error),500);
         if (error.response.data.length >= 1) {
             let errorResponse = error.response.data[0];
             let childAccountId = checkDuplicateEntry(errorResponse);
@@ -28,22 +29,22 @@ async function createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, chi
                         return [resChildAccountId, true];
                     }
                 } catch (newError) {
-                    console.error("Find Existing Child Account Error : \n" + JSON.stringify(newError));
+                    log.ERROR(functionName,"Find Existing Child Account Error : \n" + JSON.stringify(newError),500);
                     throw newError;
                 }
             } else if (checkInactiveUserEntry(errorResponse)) {
-                console.error("Inactive Owner Account. Fetching ID from CRM Admin");
-                let crmAdminOwnerID = await getCrmAdminOwnerID(OWNER_USER_ID_BASE_URL, options)
+                log.ERROR(functionName,"Inactive Owner Account. Fetching ID from CRM Admin",500);
+                let crmAdminOwnerID = await getCrmAdminOwnerID(OWNER_USER_ID_BASE_URL, options, functionName)
                 if (crmAdminOwnerID != false) {
                     childAccountBody['OwnerId'] = crmAdminOwnerID;
-                    return await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options);
+                    return await createChildAccount(OWNER_USER_ID_BASE_URL, CHILD_ACCOUNT_URL, childAccountBody, options, functionName);
                 }
-                console.error("Failed Error : \n", JSON.stringify(error.response.data[0]));
+                log.ERROR(functionName,"Failed Error : \n" + JSON.stringify(error.response.data[0]), 500);
             }
         } else {
-            console.error("Duplicate Records Not Found : \n", error.response.data[0]);
+            log.ERROR(functionName, "Duplicate Records Not Found : \n" + error.response.data[0], 500);
         }
-        console.error("Child Account Error : \n", error.response.data[0]);
+        log.ERROR(functionName,"Child Account Error : \n" + error.response.data[0], 500);
         throw error;
     }
 }
