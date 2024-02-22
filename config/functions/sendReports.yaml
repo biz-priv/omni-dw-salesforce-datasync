@@ -21,4 +21,5 @@ function:
   environment:
     REGION: ${self:provider.region}
     SERVICE: ${self:service}
-    SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    SNS_TOPIC_ARN_FAILURE: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    SNS_TOPIC_ARN_SUCCESS: ${ssm:/omni-reports/${self:provider.stage}/success-notification/sns/arn}
