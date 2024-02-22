@@ -11,7 +11,7 @@ module.exports.handler = async (event, context) => {
   functionName = context.functionName;
   const executionArn = get(event, "executionArn");                                          //Getting Current executionArn from event
   const dataLoadedToS3Count = get(event, "dataLoadedToS3")                           
-  const stepFunctionName = executionArn.split(":")[6];
+  const stepFunctionName = executionArn ? executionArn.split(":")[6] : null;
   log.INFO(functionName, "Event:" + JSON.stringify(event));
 
   try {
