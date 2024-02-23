@@ -21,7 +21,7 @@ function:
     DEFAULT_AWS: ${self:provider.region}
     DB_PORT: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/port}
     DB_HOST: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/host~true}
-    DB_PASSWORD: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/password~true}
+    DB_PASSWORD: ${ssm:/omni-dw/${self:provider.stage}/db/password.unparsed~true}
     DB_DATABASE: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/name~true}
     DB_USER: ${ssm:/omni-dw/salesforce/${self:provider.stage}/db/user~true}
     CHILD_RECORD_TYPE_ID: ${ssm:/omni-dw/salesforce/${self:provider.stage}/recordId/child}
