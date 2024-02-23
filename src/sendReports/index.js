@@ -1,7 +1,7 @@
 const get = require('lodash.get');
 const AWS = require('aws-sdk');
 const { log } = require('../shared/utils/logger');
-const { SNS_TOPIC_ARN } = process.env;
+const { SNS_TOPIC_ARN_FAILURE, SNS_TOPIC_ARN_SUCCESS } = process.env;
 const sns = new AWS.SNS({ region: process.env.REGION });
 const moment = require('moment');
 
@@ -63,10 +63,17 @@ module.exports.handler = async (event, context) => {
     log.INFO(functionName, "Values, to sent in mail " + " succeeded: " + succeeded + " failed: " + failed );
 
     const today = moment().format('YYYY-MM-DD');
+    let snsTopicArn;
+    if(failed === 0){
+      snsTopicArn = SNS_TOPIC_ARN_SUCCESS
+    }
+    else{
+      snsTopicArn = SNS_TOPIC_ARN_FAILURE
+    }
     const snsparams = {                                                                                         // Sending mail to Support Team.
       Message: `Hi Team, \n This Report is for Salesforce Datasync Job: \n Step Function Name: ${stepFunctionName} \n Total number of records processed: ${dataLoadedToS3Count} \n Number of successful records : ${succeeded} \n Number of failed records: ${failed}, \n `,
       Subject: `Salesforce Report - ${today}`,
-      TopicArn: SNS_TOPIC_ARN,
+      TopicArn: snsTopicArn,
     };
     await sns.publish(snsparams).promise();
 
