@@ -14,6 +14,7 @@ async function handleItems(tableName, record) {
     return await documentClient.batchWrite(params).promise();
   } catch (e) {
     console.error("handleItems Error: ", e);
+    console.log("params",JSON.stringify(params));
     return e;
   }
 }
