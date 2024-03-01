@@ -1,7 +1,7 @@
 const Dynamo = require("../shared/dynamoDb/index");
 const get = require('lodash.get');
 const set = require('lodash.set');
-const { insertRecord, updateRecordStatus, getItem } = require("../shared/dynamoDb/index");
+const { insertRecord, updateRecord, updateRecordStatus, getItem } = require("../shared/dynamoDb/index");
 const { getOwnerID } = require('../shared/helper/getOwnerId');
 const { createChildAccount } = require('../shared/helper/handleCreateChildAccount');
 const { createParentAccount } = require('../shared/helper/handleCreateParentAccount');
@@ -43,6 +43,8 @@ let country = "";
 let postalCode = "";
 let owner = "";
 let division__c = "";
+let currentLoadCreateDate = "";
+let currentLoadUpdateDate = ""
 
 let createdAt = new Date().toISOString();
 let parentDataArr = [];
@@ -400,6 +402,7 @@ async function processBillToNumberRecords(record, billToNumberForQueryInDynamoDb
 let functionName = "";
 module.exports.handler = async (event, context) => {
     functionName = context.functionName;
+    console.info('Event:', JSON.stringify(event))
     log.INFO(functionName, "Event: \n" + JSON.stringify(event));
     try {
         set(event, 'Payload.id', get(event, 'Payload.id', get(event, "Payload[\ufeffid]")));
@@ -409,8 +412,9 @@ module.exports.handler = async (event, context) => {
         if(Object.keys(recordCheckResponse).length === 0){
             await insertRecord(process.env.DATASYNC_DYNAMO_TABLE_NAME, event['Payload']);
         } else {
-        // } else if (get(recordCheckResponse, 'Item.status', null) !== 'Success'){   
-            await updateRecordStatus(get(event,'Payload.id'), 'Processing', {});
+        // } else if (get(recordCheckResponse, 'Item.status', null) !== 'Success'){ 
+            console.info('New Payload:', get(event,'Payload'))
+            await updateRecord(get(event,'Payload'), 'Processing', {});
         // } else {
         //     return { message: "Skipping Record, Already in Success State" }
         } 
