@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient({ region: process.env.DEFAULT_AWS });
+const { get } = require("lodash");
 
 /* insert record in table */
 async function handleItems(tableName, record) {
@@ -96,7 +97,7 @@ async function getItem(tableName, id) {
   }
 };
 
-async function updateRecord(payload, newStatus, errorMessage) {
+async function updateRecord(payload, newStatus, errorMessage,RecordCheckResponse) {
   const params = {
     TableName: process.env.DATASYNC_DYNAMO_TABLE_NAME,
     Key: {
@@ -153,7 +154,7 @@ async function updateRecord(payload, newStatus, errorMessage) {
       ':totalCost': payload['total cost'],
       ':profit': payload['profit'],
       ':owner': payload['owner'],
-      ':zip': payload['zip'],
+      ':zip': get(RecordCheckResponse, 'parent', null),
       ':accountManager': payload['account manager'],
       ':addr1': payload['addr1'],
       ':salesRep': payload['sales rep'],
