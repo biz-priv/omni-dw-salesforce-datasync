@@ -1,3 +1,10 @@
+/*
+* File: src\archiveFile\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-06-02
+* Confidential and Proprietary
+*/
 const get = require('lodash.get');
 const { moveS3ObjectToArchive } = require('../shared/s3/index');
 const { log } = require('../shared/utils/logger');

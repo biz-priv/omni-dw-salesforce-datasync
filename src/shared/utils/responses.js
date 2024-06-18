@@ -1,4 +1,11 @@
 // send response
+/*
+* File: src\shared\utils\responses.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-02
+* Confidential and Proprietary
+*/
 function send_response(http_code, resp = null) {
   var resonseData;
   if (resp) {

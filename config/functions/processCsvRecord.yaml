@@ -5,6 +5,8 @@ function:
   description: Salesforce Process CSV Record
   timeout: 900
   memorySize: 512
+  tags:
+    Name: sf-process-csv-record
   layers:
     - { Ref: OmniSalesforceDatasyncLayerLambdaLayer }
   package:

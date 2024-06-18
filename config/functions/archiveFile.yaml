@@ -6,6 +6,8 @@ function:
   runtime: nodejs18.x
   description: omni dw salesforce sf - archive file - ${self:provider.stage}
   name: omni-dw-salesforce-datasync-sf-archive-file-${self:provider.stage}
+  tags:
+    Name: datasync-sf-archive-file
   layers:
     - { Ref: OmniSalesforceDatasyncLayerLambdaLayer }
   package:
