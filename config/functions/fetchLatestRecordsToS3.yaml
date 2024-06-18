@@ -6,6 +6,8 @@ function:
   runtime: nodejs18.x
   description: omni dw salesforce sf - fetch latest records to s3 - ${self:provider.stage}
   name: omni-dw-salesforce-datasync-sf-fetch-latest-records-to-s3-${self:provider.stage}
+  tags:
+    Name: sf-fetch-latest-records-to-s3
   layers:
     - { Ref: OmniSalesforceDatasyncLayerLambdaLayer }
   package:

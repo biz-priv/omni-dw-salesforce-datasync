@@ -1,3 +1,10 @@
+/*
+* File: src\sendReports\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-06-02
+* Confidential and Proprietary
+*/
 const get = require('lodash.get');
 const AWS = require('aws-sdk');
 const { log } = require('../shared/utils/logger');

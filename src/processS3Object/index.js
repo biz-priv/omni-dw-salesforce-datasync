@@ -1,3 +1,10 @@
+/*
+* File: src\processS3Object\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-02-02
+* Confidential and Proprietary
+*/
 const get = require('lodash.get');
 const { generateAccessToken } = require('../shared/helper/generateAccessToken');
 const { log } = require('../shared/utils/logger');

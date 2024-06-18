@@ -1,5 +1,7 @@
 stateMachine:
   name: salesforce-datasync-state-machine-${self:provider.stage}
+  tags:
+    Name: salesforce-datasync-state-machine
   role: !GetAtt stateMachineRole.Arn
   definition:
     Comment: "State machine for salesforce data sync"

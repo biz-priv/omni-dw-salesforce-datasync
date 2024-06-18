@@ -1,3 +1,10 @@
+/*
+* File: src\shared\s3\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-02
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 let XLSX = require('xlsx');

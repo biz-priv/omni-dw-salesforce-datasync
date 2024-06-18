@@ -1,3 +1,10 @@
+/*
+* File: src\shared\helper\handleSaleForcastDetail.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-02
+* Confidential and Proprietary
+*/
 const axios = require('axios');
 const get = require('lodash.get');
 const set = require('lodash.set');
