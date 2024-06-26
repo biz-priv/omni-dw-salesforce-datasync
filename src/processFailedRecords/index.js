@@ -1,3 +1,10 @@
+/*
+* File: src\processFailedRecords\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-02-02
+* Confidential and Proprietary
+*/
 const { generateAccessToken } = require('../shared/helper/generateAccessToken');
 const { createChildAccount } = require('../shared/helper/handleCreateChildAccount');
 const { fetchSalesForecastRecordIdByPatch, upsertSalesForecastDetails } = require('../shared/helper/handleSaleForcastDetail');

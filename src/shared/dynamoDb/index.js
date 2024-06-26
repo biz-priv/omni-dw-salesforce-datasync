@@ -1,3 +1,10 @@
+/*
+* File: src\shared\dynamoDb\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-02
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient({ region: process.env.DEFAULT_AWS });
 

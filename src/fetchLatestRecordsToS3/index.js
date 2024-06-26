@@ -1,3 +1,10 @@
+/*
+* File: src\fetchLatestRecordsToS3\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-06-02
+* Confidential and Proprietary
+*/
 const { Client } = require("pg");
 const { getLatestTimestampFromSSM, updateLatestTimestampToSSM } = require("../shared/ssm/index");
 const get = require('lodash.get');

@@ -4,6 +4,8 @@ function:
   name: omni-dw-salesforce-datasync-sf-process-failed-records-${self:provider.stage}
   description: Processing Failed Records Of SalesforceApis
   timeout: 900
+  tags:
+    Name: sf-process-failed-records
   layers:
     - { Ref: OmniSalesforceDatasyncLayerLambdaLayer}
   package:

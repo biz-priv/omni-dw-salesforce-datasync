@@ -1,3 +1,10 @@
+/*
+* File: src\shared\sendEmail\index.js
+* Project: Omni-dw-salesforce-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-02
+* Confidential and Proprietary
+*/
 const nodemailer = require("nodemailer");
 const fs = require('fs');
 const { log } = require("../utils/logger");
